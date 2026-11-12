@@ -8,10 +8,11 @@ Calibrated IT incident framing and routing. Built so far:
 | Question templates, 11 authored seeds | `packages/resolveit-frames` | hi / hinglish unreviewed |
 | Schema with forced row-level security | `infra/migrations` | Tested |
 | API: persist-first intake, one optional question, erasure | `apps/api` | Tested (gate G3, partial) |
+| MCP endpoint, protocol 2026-07-28, signed request state | `apps/api/resolveit_api/routes/mcp.py` | Tested; see note below |
+| Worker: clarification timeouts, crash recovery, leader lock | `apps/worker` | Tested |
 | Encryption, blind index, crypto-shredding | `enterprise/resolveit_enterprise/privacy` | Tested; local key wrapper is dev-only |
 
-Not built yet: trained model and ONNX bundle, worker (timeouts, outbox), Jira connector,
-MCP endpoint, web app, deployment.
+Not built yet: trained model and ONNX bundle, outbox, Jira connector, web app, deployment.
 
 ## Run the gates
 
@@ -26,6 +27,15 @@ MCP endpoint, web app, deployment.
   It returns a frame, evidence and a recommended team for a human.
 - Tenants flagged `is_synthetic` get a bundle calibrated on generated tickets so the full
   ROUTE / ASK / DEFER flow can be shown. Its numbers describe the generator, nothing else.
+
+## MCP conformance note
+
+Built from the published 2026-07-28 changelog and the multi round-trip requests page: required
+headers, `resultType`, `input_required` with `inputRequests` and `requestState`, error codes
+-32020 and -32022, `traceparent` in `_meta`. Two details were not confirmed against the schema
+file and may need a small change: that `inputResponses` and `requestState` sit directly under
+`params` on the retry, and the exact field names of the `server/discover` result. It has not
+been run against an official SDK client.
 
 ## Open design items found while building
 

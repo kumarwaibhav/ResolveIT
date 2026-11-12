@@ -45,7 +45,8 @@ async def database() -> AsyncIterator[None]:
     await admin.execute(f"CREATE DATABASE {DB} OWNER resolveit_migrator")
     await admin.close()
     conn = await _migrator()
-    await conn.execute((ROOT / "infra/migrations/0001_init.sql").read_text())
+    for migration in sorted((ROOT / "infra/migrations").glob("*.sql")):
+        await conn.execute(migration.read_text())
     for tid, name, synthetic in [
         (TENANT_A, "Acme", False),
         (TENANT_B, "Globex", False),

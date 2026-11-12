@@ -22,6 +22,7 @@ TABLES = [
     "questions",
     "channel_stats",
     "erasure_requests",
+    "mcp_calls",
 ]
 
 
@@ -31,18 +32,17 @@ async def _create(client: httpx.AsyncClient, key: str, body: str) -> dict:
     return r.json()
 
 
-async def test_every_tenant_table_has_rls_enabled_and_forced(app_conn: asyncpg.Connection) -> None:
+async def test_every_table_has_rls_enabled_forced_and_a_policy(app_conn: asyncpg.Connection) -> None:
+    """Checks every table in the schema, so a new table cannot ship without isolation."""
     rows = await app_conn.fetch(
-        "SELECT relname, relrowsecurity, relforcerowsecurity FROM pg_class WHERE relname = ANY($1::text[])",
-        TABLES,
+        "SELECT c.relname, c.relrowsecurity, c.relforcerowsecurity, "
+        "(SELECT count(*) FROM pg_policy p WHERE p.polrelid = c.oid) AS policies "
+        "FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
+        "WHERE n.nspname = 'public' AND c.relkind = 'r'"
     )
-    assert len(rows) == len(TABLES)
-    assert all(r["relrowsecurity"] and r["relforcerowsecurity"] for r in rows)
-    public_tables = await app_conn.fetch(
-        "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND NOT (tablename = ANY($1::text[]))",
-        TABLES,
-    )
-    assert public_tables == [], "a table exists without an isolation policy"
+    assert {r["relname"] for r in rows} >= set(TABLES)
+    for r in rows:
+        assert r["relrowsecurity"] and r["relforcerowsecurity"] and r["policies"] == 1, r["relname"]
 
 
 async def test_app_role_is_not_privileged(app_conn: asyncpg.Connection) -> None:

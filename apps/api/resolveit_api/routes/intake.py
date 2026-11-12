@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import secrets
 from datetime import UTC, datetime, timedelta
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -141,9 +141,8 @@ async def _close(session: AsyncSession, incident_id: UUID, decision: Decision) -
     return state
 
 
-@router.post("/incidents", response_model=IncidentView, status_code=status.HTTP_201_CREATED)
-async def create_incident(body: IncidentCreate, request: Request, who: Writer) -> IncidentView:
-    app = request.app.state
+async def submit(app: Any, tenant_id: UUID, body: IncidentCreate) -> IncidentView:
+    """Persist the incident, then evaluate it. Shared by REST and MCP."""
     now = datetime.now(UTC)
     incident_id = uuid4()
     audit = _rng.random() < app.settings.audit_rate  # drawn before any decision exists
@@ -155,10 +154,10 @@ async def create_incident(body: IncidentCreate, request: Request, who: Writer) -
     )
     normalised, _ = normalize_nfkc(body.text)
     mask = mask_pii(normalised)
-    sealed = seal(app.wrapper, who.tenant_id, incident_id, body.text)
+    sealed = seal(app.wrapper, tenant_id, incident_id, body.text)
 
-    async with app.db.tenant_tx(who.tenant_id) as session:
-        timezone, is_synthetic = await _tenant(session, who.tenant_id)
+    async with app.db.tenant_tx(tenant_id) as session:
+        timezone, is_synthetic = await _tenant(session, tenant_id)
         await session.execute(
             text(
                 "INSERT INTO incidents (id, tenant_id, state, channel, locale, sla_started_at, "
@@ -167,7 +166,7 @@ async def create_incident(body: IncidentCreate, request: Request, who: Writer) -
             ),
             {
                 "id": incident_id,
-                "t": who.tenant_id,
+                "t": tenant_id,
                 "c": body.channel.value,
                 "l": body.locale,
                 "now": now,
@@ -178,7 +177,7 @@ async def create_incident(body: IncidentCreate, request: Request, who: Writer) -
         )
         await session.execute(
             text("INSERT INTO incident_keys (incident_id, tenant_id, wrapped_key) VALUES (:i, :t, :k)"),
-            {"i": incident_id, "t": who.tenant_id, "k": sealed.wrapped_key},
+            {"i": incident_id, "t": tenant_id, "k": sealed.wrapped_key},
         )
         await session.execute(
             text(
@@ -187,7 +186,7 @@ async def create_incident(body: IncidentCreate, request: Request, who: Writer) -
             ),
             {
                 "i": incident_id,
-                "t": who.tenant_id,
+                "t": tenant_id,
                 "m": mask.masked_text,
                 "c": sealed.ciphertext,
                 "n": sealed.nonce,
@@ -200,19 +199,19 @@ async def create_incident(body: IncidentCreate, request: Request, who: Writer) -
                     "ON CONFLICT DO NOTHING"
                 ),
                 {
-                    "t": who.tenant_id,
-                    "h": blind_index(app.wrapper, who.tenant_id, ent[0], ent[1]),
+                    "t": tenant_id,
+                    "h": blind_index(app.wrapper, tenant_id, ent[0], ent[1]),
                     "i": incident_id,
                 },
             )
 
     bundle: Bundle = app.bundles[is_synthetic]
     question: QuestionView | None = None
-    async with app.db.tenant_tx(who.tenant_id) as session:
-        costs = await _stats(session, who.tenant_id, body.channel)
+    async with app.db.tenant_tx(tenant_id) as session:
+        costs = await _stats(session, tenant_id, body.channel)
         ev = evaluate(body.text, now, timezone, bundle, costs, holdout)
-        await _store_frame(session, who.tenant_id, incident_id, 1, ev.frame)
-        await _store_decision(session, who.tenant_id, incident_id, "initial", ev.decision)
+        await _store_frame(session, tenant_id, incident_id, 1, ev.frame)
+        await _store_decision(session, tenant_id, incident_id, "initial", ev.decision)
         await session.execute(
             text("UPDATE incidents SET security_trigger = :s WHERE id = :i"),
             {"s": ev.rules.security_trigger, "i": incident_id},
@@ -228,13 +227,13 @@ async def create_incident(body: IncidentCreate, request: Request, who: Writer) -
                 ),
                 {
                     "i": incident_id,
-                    "t": who.tenant_id,
+                    "t": tenant_id,
                     "s": slot.value,
                     "tpl": question.template_id,
                     "c": body.channel.value,
                 },
             )
-            await _bump(session, who.tenant_id, body.channel.value, 1, 0)
+            await _bump(session, tenant_id, body.channel.value, 1, 0)
         else:
             state = await _close(session, incident_id, ev.decision)
 
@@ -252,7 +251,12 @@ async def create_incident(body: IncidentCreate, request: Request, who: Writer) -
     )
 
 
-async def _load_view(app: object, session: AsyncSession, tenant_id: UUID, incident_id: UUID) -> IncidentView:
+@router.post("/incidents", response_model=IncidentView, status_code=status.HTTP_201_CREATED)
+async def create_incident(body: IncidentCreate, request: Request, who: Writer) -> IncidentView:
+    return await submit(request.app.state, who.tenant_id, body)
+
+
+async def load_view(app: Any, session: AsyncSession, tenant_id: UUID, incident_id: UUID) -> IncidentView:
     row = (
         await session.execute(
             text(
@@ -269,7 +273,7 @@ async def _load_view(app: object, session: AsyncSession, tenant_id: UUID, incide
         raise HTTPException(status.HTTP_404_NOT_FOUND, "incident not found")
     raw: str | None = None
     if row[6] is not None and row[8] is not None:
-        raw = unseal(app.wrapper, tenant_id, incident_id, SealedText(row[8], row[7], row[6]))  # type: ignore[attr-defined]
+        raw = unseal(app.wrapper, tenant_id, incident_id, SealedText(row[8], row[7], row[6]))
     frame_row = (
         await session.execute(
             text("SELECT slots FROM frames WHERE incident_id = :i ORDER BY version DESC LIMIT 1"),
@@ -295,8 +299,8 @@ async def _load_view(app: object, session: AsyncSession, tenant_id: UUID, incide
     decision = Decision.model_validate(dec_row[0]) if dec_row and not erased else None
     question = None
     if q_row and row[0] == "PENDING_CLARIFICATION":
-        bundle: Bundle = app.bundles[row[5]]  # type: ignore[attr-defined]
-        question = app.templates.question(Slot(q_row[0]), row[2], bundle.theta.values[Slot(q_row[0])])  # type: ignore[attr-defined]
+        bundle: Bundle = app.bundles[row[5]]
+        question = app.templates.question(Slot(q_row[0]), row[2], bundle.theta.values[Slot(q_row[0])])
     return IncidentView(
         id=incident_id,
         state=row[0],
@@ -314,15 +318,14 @@ async def _load_view(app: object, session: AsyncSession, tenant_id: UUID, incide
 @router.get("/incidents/{incident_id}", response_model=IncidentView)
 async def get_incident(incident_id: UUID, request: Request, who: Reader) -> IncidentView:
     async with request.app.state.db.tenant_tx(who.tenant_id) as session:
-        return await _load_view(request.app.state, session, who.tenant_id, incident_id)
+        return await load_view(request.app.state, session, who.tenant_id, incident_id)
 
 
-@router.post("/incidents/{incident_id}/answer", response_model=IncidentView)
-async def answer_question(
-    incident_id: UUID, body: AnswerSubmit, request: Request, who: Writer
+async def close_question(
+    app: Any, tenant_id: UUID, role: str, incident_id: UUID, answer: str | None, none_outcome: str = "skipped"
 ) -> IncidentView:
-    app = request.app.state
-    async with app.db.tenant_tx(who.tenant_id) as session:
+    """Apply an answer, a skip or a timeout to the one open question. Shared by REST, MCP and the worker."""
+    async with app.db.tenant_tx(tenant_id) as session:
         inc = (
             await session.execute(
                 text(
@@ -360,33 +363,74 @@ async def answer_question(
                 )
             ).scalar_one()
         )
-        answer = body.answer
         if answer is not None and answer not in bundle.theta.values[slot]:
             answer = UNKNOWN_ANSWER
-        costs = await _stats(session, who.tenant_id, channel)
+        costs = await _stats(session, tenant_id, channel)
         final = finalize(initial, frame, slot, answer, bundle, costs, inc[2])
-        source = SourceLayer.AGENT_ASSERTED if who.role == "agent" else SourceLayer.USER_ANSWER
+        source = SourceLayer.AGENT_ASSERTED if role == "agent" else SourceLayer.USER_ANSWER
         if answer is not None and answer != UNKNOWN_ANSWER:
-            await _store_frame(
-                session, who.tenant_id, incident_id, 2, apply_answer(frame, slot, answer, source)
-            )
+            await _store_frame(session, tenant_id, incident_id, 2, apply_answer(frame, slot, answer, source))
         await session.execute(
             text(
                 "UPDATE questions SET outcome = :o, answer = :a, answer_source = :src, closed_at = now() "
                 "WHERE incident_id = :i"
             ),
             {
-                "o": "skipped" if answer is None else "answered",
+                "o": none_outcome if answer is None else "answered",
                 "a": answer,
                 "src": None if answer is None else source.value,
                 "i": incident_id,
             },
         )
         if answer is not None:
-            await _bump(session, who.tenant_id, channel.value, 0, 1)
-        await _store_decision(session, who.tenant_id, incident_id, "final", final)
+            await _bump(session, tenant_id, channel.value, 0, 1)
+        await _store_decision(session, tenant_id, incident_id, "final", final)
         await _close(session, incident_id, final)
-        return await _load_view(app, session, who.tenant_id, incident_id)
+        return await load_view(app, session, tenant_id, incident_id)
+
+
+async def recover_unevaluated(app: Any, tenant_id: UUID, incident_id: UUID) -> bool:
+    """Evaluate an incident that was persisted but never decided (the process died in between).
+
+    No question is asked this late: the incident is closed as ROUTE or DEFER on what the text says.
+    Returns False if there was nothing to recover.
+    """
+    async with app.db.tenant_tx(tenant_id) as session:
+        row = (
+            await session.execute(
+                text(
+                    "SELECT i.channel, i.sla_started_at, t.timezone, t.is_synthetic, x.raw_ciphertext, "
+                    "x.raw_nonce, k.wrapped_key, "
+                    "(SELECT count(*) FROM decisions d WHERE d.incident_id = i.id) AS decided "
+                    "FROM incidents i JOIN tenants t ON t.id = i.tenant_id "
+                    "JOIN incident_text x ON x.incident_id = i.id "
+                    "JOIN incident_keys k ON k.incident_id = i.id "
+                    "WHERE i.id = :i AND i.state = 'PENDING_CLARIFICATION' FOR UPDATE OF i"
+                ),
+                {"i": incident_id},
+            )
+        ).first()
+        if row is None or row[7] > 0 or row[4] is None:
+            return False
+        raw = unseal(app.wrapper, tenant_id, incident_id, SealedText(row[6], row[5], row[4]))
+        bundle: Bundle = app.bundles[row[3]]
+        costs = await _stats(session, tenant_id, Channel(row[0]))
+        ev = evaluate(raw, row[1], row[2], bundle, costs, True)
+        await _store_frame(session, tenant_id, incident_id, 1, ev.frame)
+        await _store_decision(session, tenant_id, incident_id, "final", ev.decision)
+        await session.execute(
+            text("UPDATE incidents SET security_trigger = :s WHERE id = :i"),
+            {"s": ev.rules.security_trigger, "i": incident_id},
+        )
+        await _close(session, incident_id, ev.decision)
+    return True
+
+
+@router.post("/incidents/{incident_id}/answer", response_model=IncidentView)
+async def answer_question(
+    incident_id: UUID, body: AnswerSubmit, request: Request, who: Writer
+) -> IncidentView:
+    return await close_question(request.app.state, who.tenant_id, who.role, incident_id, body.answer)
 
 
 @router.post("/privacy/erasure", response_model=ErasureResult)

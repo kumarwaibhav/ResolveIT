@@ -50,6 +50,33 @@ class Database:
             ).first()
         return (row[0], row[1]) if row else None
 
+    async def due_clarifications(self, limit: int = 100) -> list[tuple[UUID, UUID]]:
+        """(tenant_id, incident_id) pairs past their clarification deadline. IDs only, all tenants."""
+        async with self._sessions() as session, session.begin():
+            rows = (
+                await session.execute(
+                    text("SELECT tenant_id, incident_id FROM due_clarifications(:n)"), {"n": limit}
+                )
+            ).all()
+        return [(r[0], r[1]) for r in rows]
+
+    @asynccontextmanager
+    async def leader_lock(self, lock_id: int) -> AsyncIterator[bool]:
+        """Session advisory lock so only one worker drains at a time.
+
+        Needs a direct Postgres connection: session locks do not survive PgBouncer
+        transaction pooling. Yields False if another worker holds the lock.
+        """
+        async with self._engine.connect() as conn:
+            got = bool((await conn.execute(text("SELECT pg_try_advisory_lock(:k)"), {"k": lock_id})).scalar())
+            await conn.commit()
+            try:
+                yield got
+            finally:
+                if got:
+                    await conn.execute(text("SELECT pg_advisory_unlock(:k)"), {"k": lock_id})
+                    await conn.commit()
+
     async def dispose(self) -> None:
         await self._engine.dispose()
 
