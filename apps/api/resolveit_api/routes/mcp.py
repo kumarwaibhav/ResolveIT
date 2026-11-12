@@ -286,7 +286,7 @@ async def _call_tool(app: Any, who: Principal, params: dict[str, Any]) -> dict[s
         existing = (
             await session.execute(text("SELECT incident_id FROM mcp_calls WHERE idem_key = :k"), {"k": idem})
         ).scalar_one_or_none()
-        current = await load_current(app, session, who.tenant_id, existing) if existing else None
+        current = await load_view(app, session, who.tenant_id, existing) if existing else None
     if current is None:
         current = await submit(app, who.tenant_id, body)
         async with app.db.tenant_tx(who.tenant_id) as session:
