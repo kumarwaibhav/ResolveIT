@@ -1,0 +1,1032 @@
+{
+  "components": {
+    "schemas": {
+      "Action": {
+        "enum": [
+          "ROUTE",
+          "ASK",
+          "DEFER"
+        ],
+        "title": "Action",
+        "type": "string"
+      },
+      "AnswerSubmit": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null means the user pressed Skip.",
+            "title": "Answer"
+          }
+        },
+        "title": "AnswerSubmit",
+        "type": "object"
+      },
+      "Channel": {
+        "enum": [
+          "web",
+          "email",
+          "chat",
+          "itsm",
+          "agent"
+        ],
+        "title": "Channel",
+        "type": "string"
+      },
+      "ConformalResult": {
+        "additionalProperties": false,
+        "properties": {
+          "alpha": {
+            "title": "Alpha",
+            "type": "number"
+          },
+          "class_conditional": {
+            "description": "Per team in TEAMS order: True if that team has its own threshold (class-level coverage claimed), False if it uses the pooled threshold.",
+            "items": {
+              "type": "boolean"
+            },
+            "title": "Class Conditional",
+            "type": "array"
+          },
+          "teams": {
+            "items": {
+              "$ref": "#/components/schemas/Team"
+            },
+            "title": "Teams",
+            "type": "array"
+          }
+        },
+        "required": [
+          "teams",
+          "alpha",
+          "class_conditional"
+        ],
+        "title": "ConformalResult",
+        "type": "object"
+      },
+      "Decision": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/Action"
+          },
+          "ask_slot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Slot"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attributions": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/SlotAttribution"
+            },
+            "title": "Attributions",
+            "type": "array"
+          },
+          "bundle_id": {
+            "title": "Bundle Id",
+            "type": "string"
+          },
+          "c_def": {
+            "title": "C Def",
+            "type": "number"
+          },
+          "conformal": {
+            "$ref": "#/components/schemas/ConformalResult"
+          },
+          "defer_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeferReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "no_ask_holdout": {
+            "default": false,
+            "title": "No Ask Holdout",
+            "type": "boolean"
+          },
+          "probs": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Probs",
+            "type": "array"
+          },
+          "question_risks": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/QuestionRisk"
+            },
+            "title": "Question Risks",
+            "type": "array"
+          },
+          "r_now": {
+            "title": "R Now",
+            "type": "number"
+          },
+          "r_route": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None encodes +infinity (route forbidden).",
+            "title": "R Route"
+          },
+          "recommended_team": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Team"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Cost-minimising team, shown to reviewers. A recommendation, not an auto-route."
+          },
+          "tau_hat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None = shadow mode, auto-route off.",
+            "title": "Tau Hat"
+          },
+          "team": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Team"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "action",
+          "bundle_id",
+          "probs",
+          "conformal",
+          "r_now",
+          "c_def"
+        ],
+        "title": "Decision",
+        "type": "object"
+      },
+      "DeferReason": {
+        "enum": [
+          "no_conforming_team",
+          "risk_above_defer_cost",
+          "shadow_mode",
+          "set_too_large",
+          "critical_contradiction",
+          "unmapped_queue"
+        ],
+        "title": "DeferReason",
+        "type": "string"
+      },
+      "EpistemicState": {
+        "enum": [
+          "PRESENT",
+          "MISSING",
+          "AMBIGUOUS",
+          "CONTRADICTED"
+        ],
+        "title": "EpistemicState",
+        "type": "string"
+      },
+      "ErasureRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "identifier": {
+            "maxLength": 320,
+            "minLength": 1,
+            "title": "Identifier",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "EMAIL",
+              "AADHAAR",
+              "PAN",
+              "IP_ADDR",
+              "PHONE_IN",
+              "EMP_ID",
+              "USER_NAME"
+            ],
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "identifier"
+        ],
+        "title": "ErasureRequest",
+        "type": "object"
+      },
+      "ErasureResult": {
+        "additionalProperties": false,
+        "properties": {
+          "incidents_erased": {
+            "title": "Incidents Erased",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "incidents_erased"
+        ],
+        "title": "ErasureResult",
+        "type": "object"
+      },
+      "EvidenceView": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "integer"
+          },
+          "rule_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Id"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceLayer"
+          },
+          "start": {
+            "title": "Start",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "source"
+        ],
+        "title": "EvidenceView",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "IncidentCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "channel": {
+            "$ref": "#/components/schemas/Channel",
+            "default": "web"
+          },
+          "locale": {
+            "default": "en",
+            "enum": [
+              "en",
+              "hi",
+              "hinglish"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "IncidentCreate",
+        "type": "object"
+      },
+      "IncidentView": {
+        "additionalProperties": false,
+        "properties": {
+          "channel": {
+            "$ref": "#/components/schemas/Channel"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Decision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "frame": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/SlotView"
+            },
+            "title": "Frame",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_synthetic_tenant": {
+            "description": "True: show the permanent synthetic-data banner.",
+            "title": "Is Synthetic Tenant",
+            "type": "boolean"
+          },
+          "locale": {
+            "enum": [
+              "en",
+              "hi",
+              "hinglish"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuestionView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "routed_team": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Routed Team"
+          },
+          "security_trigger": {
+            "title": "Security Trigger",
+            "type": "boolean"
+          },
+          "state": {
+            "enum": [
+              "PENDING_CLARIFICATION",
+              "ROUTED",
+              "DEFERRED",
+              "BOUNCED",
+              "RESOLVED",
+              "ERASED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Original text, for the evidence view. Null once the incident is erased.",
+            "title": "Text"
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "channel",
+          "locale",
+          "is_synthetic_tenant",
+          "security_trigger"
+        ],
+        "title": "IncidentView",
+        "type": "object"
+      },
+      "OptionView": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "label"
+        ],
+        "title": "OptionView",
+        "type": "object"
+      },
+      "QuestionRisk": {
+        "additionalProperties": false,
+        "properties": {
+          "r_after": {
+            "title": "R After",
+            "type": "number"
+          },
+          "r_ask": {
+            "title": "R Ask",
+            "type": "number"
+          },
+          "slot": {
+            "$ref": "#/components/schemas/Slot"
+          }
+        },
+        "required": [
+          "slot",
+          "r_after",
+          "r_ask"
+        ],
+        "title": "QuestionRisk",
+        "type": "object"
+      },
+      "QuestionView": {
+        "additionalProperties": false,
+        "properties": {
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/OptionView"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "skip_allowed": {
+            "const": true,
+            "default": true,
+            "title": "Skip Allowed",
+            "type": "boolean"
+          },
+          "slot": {
+            "$ref": "#/components/schemas/Slot"
+          },
+          "template_id": {
+            "title": "Template Id",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slot",
+          "template_id",
+          "text",
+          "options"
+        ],
+        "title": "QuestionView",
+        "type": "object"
+      },
+      "Slot": {
+        "enum": [
+          "service",
+          "component",
+          "symptom",
+          "scope",
+          "start_time",
+          "frequency",
+          "environment",
+          "error_code",
+          "recent_change",
+          "user_role_location",
+          "urgency"
+        ],
+        "title": "Slot",
+        "type": "string"
+      },
+      "SlotAttribution": {
+        "additionalProperties": false,
+        "properties": {
+          "delta_p": {
+            "description": "Drop in top-team probability when this slot is ablated.",
+            "title": "Delta P",
+            "type": "number"
+          },
+          "slot": {
+            "$ref": "#/components/schemas/Slot"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slot",
+          "value",
+          "delta_p"
+        ],
+        "title": "SlotAttribution",
+        "type": "object"
+      },
+      "SlotView": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/EvidenceView"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "slot": {
+            "$ref": "#/components/schemas/Slot"
+          },
+          "state": {
+            "$ref": "#/components/schemas/EpistemicState"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "slot",
+          "state"
+        ],
+        "title": "SlotView",
+        "type": "object"
+      },
+      "SourceLayer": {
+        "enum": [
+          "rule",
+          "model",
+          "rule+model",
+          "user_answer",
+          "agent_asserted",
+          "human_correction"
+        ],
+        "title": "SourceLayer",
+        "type": "string"
+      },
+      "Team": {
+        "enum": [
+          "Network",
+          "Identity_Access",
+          "Email_Collab",
+          "Hardware_Endpoint",
+          "Software_Licensing",
+          "Database",
+          "Cloud_Infra",
+          "Security",
+          "ERP_Finance",
+          "HR_Systems",
+          "DevOps_CICD",
+          "Facilities_AV"
+        ],
+        "title": "Team",
+        "type": "string"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "ResolveIT API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/healthz": {
+      "get": {
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Healthz Healthz Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Healthz"
+      }
+    },
+    "/mcp": {
+      "post": {
+        "operationId": "mcp_mcp_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "mcp-protocol-version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mcp-Protocol-Version"
+            }
+          },
+          {
+            "in": "header",
+            "name": "mcp-method",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mcp-Method"
+            }
+          },
+          {
+            "in": "header",
+            "name": "mcp-name",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mcp-Name"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mcp"
+      }
+    },
+    "/v1/incidents": {
+      "post": {
+        "operationId": "create_incident_v1_incidents_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IncidentCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Incident"
+      }
+    },
+    "/v1/incidents/{incident_id}": {
+      "get": {
+        "operationId": "get_incident_v1_incidents__incident_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Incident Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Incident"
+      }
+    },
+    "/v1/incidents/{incident_id}/answer": {
+      "post": {
+        "operationId": "answer_question_v1_incidents__incident_id__answer_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Incident Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnswerSubmit"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Answer Question"
+      }
+    },
+    "/v1/privacy/erasure": {
+      "post": {
+        "description": "Crypto-shred every incident linked to one identifier. Irreversible.",
+        "operationId": "erase_subject_v1_privacy_erasure_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErasureRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErasureResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Erase Subject"
+      }
+    }
+  }
+}

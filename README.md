@@ -10,15 +10,27 @@ Calibrated IT incident framing and routing. Built so far:
 | API: persist-first intake, one optional question, erasure | `apps/api` | Tested (gate G3, partial) |
 | MCP endpoint, protocol 2026-07-28, signed request state | `apps/api/resolveit_api/routes/mcp.py` | Tested; see note below |
 | Worker: clarification timeouts, crash recovery, leader lock | `apps/worker` | Tested |
+| Web app: intake with on-device detail meter, evidence view, agent hand-off simulator | `apps/web` | Tested (gate G4, partial) |
 | Encryption, blind index, crypto-shredding | `enterprise/resolveit_enterprise/privacy` | Tested; local key wrapper is dev-only |
 
-Not built yet: trained model and ONNX bundle, outbox, Jira connector, web app, deployment.
+Not built yet: trained model and ONNX bundle, outbox, Jira connector, review console, bounce
+analyzer, evaluation lab, settings, deployment.
 
 ## Run the gates
 
     pip install -e "packages/resolveit-core[dev]" -e "apps/api[dev]"
     bash scripts/ci_gates/g1_core.sh
     bash scripts/ci_gates/g3_api.sh     # needs Postgres 16 binaries; starts a throwaway cluster
+
+## Run the demo locally
+
+    (cd apps/web && npm ci)
+    bash scripts/dev_up.sh prod         # Postgres, migrations, synthetic tenant, API :8000, web :3000
+    bash scripts/ci_gates/g4_web.sh     # static checks plus browser journeys against the running stack
+
+The web app is Next.js 15 (App Router), TypeScript, Tailwind 4 and shadcn/ui. Its API types and
+the on-device rule patterns are generated from the Python source by `scripts/export_contracts.py`;
+the gate fails if they are stale. API keys stay on the Next.js server.
 
 ## What the API does today, honestly
 

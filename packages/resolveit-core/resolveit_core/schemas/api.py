@@ -62,6 +62,9 @@ class IncidentView(_Model):
     is_synthetic_tenant: bool = Field(description="True: show the permanent synthetic-data banner.")
     security_trigger: bool
     routed_team: str | None = None
+    text: str | None = Field(
+        default=None, description="Original text, for the evidence view. Null once the incident is erased."
+    )
     frame: list[SlotView] = []
     decision: Decision | None = None
     question: QuestionView | None = None

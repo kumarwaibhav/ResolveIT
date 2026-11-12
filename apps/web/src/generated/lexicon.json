@@ -1,0 +1,214 @@
+{
+  "note": "Generated from resolveit_core.rules.engine. Do not edit. Patterns are case-insensitive.",
+  "meter_slots": [
+    "service",
+    "error_code",
+    "scope",
+    "frequency",
+    "urgency",
+    "start_time"
+  ],
+  "entries": [
+    {
+      "slot": "service",
+      "value": "vpn",
+      "pattern": "\\b(?:vpn|globalprotect|anyconnect|forticlient)\\b|वीपीएन"
+    },
+    {
+      "slot": "service",
+      "value": "wifi",
+      "pattern": "\\b(?:wi-?fi|wireless|wlan)\\b|वाई-?फाई"
+    },
+    {
+      "slot": "service",
+      "value": "email",
+      "pattern": "\\b(?:outlook|e-?mail|mailbox|exchange|gmail)\\b|ईमेल|मेल"
+    },
+    {
+      "slot": "service",
+      "value": "teams",
+      "pattern": "\\b(?:ms teams|microsoft teams|teams)\\b"
+    },
+    {
+      "slot": "service",
+      "value": "laptop",
+      "pattern": "\\b(?:laptop|notebook|macbook|thinkpad)\\b|लैपटॉप"
+    },
+    {
+      "slot": "service",
+      "value": "printer",
+      "pattern": "\\b(?:printer|print queue)\\b|प्रिंटर"
+    },
+    {
+      "slot": "service",
+      "value": "sso",
+      "pattern": "\\b(?:sso|okta|azure ad|entra|single sign[- ]on|mfa|2fa)\\b"
+    },
+    {
+      "slot": "service",
+      "value": "password",
+      "pattern": "\\b(?:password|passcode)\\b|पासवर्ड"
+    },
+    {
+      "slot": "service",
+      "value": "sap",
+      "pattern": "\\b(?:sap|s/4hana|oracle ebs|tally)\\b"
+    },
+    {
+      "slot": "service",
+      "value": "hrms",
+      "pattern": "\\b(?:workday|hrms|successfactors|darwinbox|payslip|payroll)\\b"
+    },
+    {
+      "slot": "service",
+      "value": "database",
+      "pattern": "\\b(?:database|postgres|mysql|sql server|oracle db|mongodb)\\b|डेटाबेस"
+    },
+    {
+      "slot": "service",
+      "value": "cloud",
+      "pattern": "\\b(?:aws|azure|gcp|ec2|s3 bucket|kubernetes|k8s)\\b"
+    },
+    {
+      "slot": "service",
+      "value": "cicd",
+      "pattern": "\\b(?:jenkins|github actions|gitlab ci|pipeline|build agent|argo ?cd)\\b"
+    },
+    {
+      "slot": "service",
+      "value": "licence",
+      "pattern": "\\b(?:licen[cs]e|subscription|activation key)\\b|लाइसेंस"
+    },
+    {
+      "slot": "service",
+      "value": "meeting_room",
+      "pattern": "\\b(?:projector|conference room|meeting room|av system|zoom room)\\b"
+    },
+    {
+      "slot": "frequency",
+      "value": "recurring",
+      "pattern": "\\b(?:again|once again|keeps? (?:on )?\\w+ing|every time|each time|repeatedly)\\b"
+    },
+    {
+      "slot": "frequency",
+      "value": "recurring",
+      "pattern": "\\b(?:phir se|fir se|dobara|baar baar|bar bar|har baar|har bar)\\b|फिर से|दोबारा|बार बार|हर बार"
+    },
+    {
+      "slot": "frequency",
+      "value": "intermittent",
+      "pattern": "\\b(?:intermittent(?:ly)?|on and off|sometimes|randomly|kabhi kabhi)\\b|कभी कभी"
+    },
+    {
+      "slot": "frequency",
+      "value": "constant",
+      "pattern": "\\b(?:always|constantly|all the time|continuously|hamesha|lagatar)\\b|हमेशा|लगातार"
+    },
+    {
+      "slot": "frequency",
+      "value": "first_time",
+      "pattern": "\\b(?:first time|never happened before|pehli baar|pehli bar)\\b|पहली बार"
+    },
+    {
+      "slot": "urgency",
+      "value": "high",
+      "pattern": "\\b(?:urgent(?:ly)?|asap|immediately|critical|blocker|production (?:is )?down|p1|sev ?1)\\b"
+    },
+    {
+      "slot": "urgency",
+      "value": "high",
+      "pattern": "\\b(?:jaldi|turant|abhi ke abhi|bahut zaroori|bahut jaruri)\\b|जल्दी|तुरंत|बहुत ज़रूरी|बहुत जरूरी"
+    },
+    {
+      "slot": "urgency",
+      "value": "low",
+      "pattern": "\\b(?:whenever (?:you can|possible)|no rush|low priority|not urgent)\\b"
+    },
+    {
+      "slot": "scope",
+      "value": "department_wide",
+      "pattern": "\\b(?:whole|entire) (?:floor|team|department|office)\\b|\\ball of us\\b|\\bpoor[ie] team\\b|\\bpoora (?:floor|office)\\b|पूरी टीम|पूरा ऑफिस"
+    },
+    {
+      "slot": "scope",
+      "value": "org_wide",
+      "pattern": "\\b(?:everyone|everybody|all users|company[- ]wide|org[- ]wide|sabka|sab ka|sabhi)\\b|सबका|सभी"
+    },
+    {
+      "slot": "scope",
+      "value": "single_user",
+      "pattern": "\\b(?:only me|just me|only my|sirf mera|sirf meri|sirf mere)\\b|सिर्फ मेरा|सिर्फ मेरी"
+    },
+    {
+      "slot": "error_code",
+      "value": "err.hex",
+      "pattern": "0x[0-9A-Fa-f]{4,}"
+    },
+    {
+      "slot": "error_code",
+      "value": "err.chromium",
+      "pattern": "\\bERR_[A-Z0-9_]+\\b"
+    },
+    {
+      "slot": "error_code",
+      "value": "err.oracle",
+      "pattern": "\\bORA-\\d{5}\\b"
+    },
+    {
+      "slot": "error_code",
+      "value": "err.event_id",
+      "pattern": "\\bEvent\\s+ID\\s*:?\\s*(\\d{3,5})\\b"
+    },
+    {
+      "slot": "error_code",
+      "value": "err.http",
+      "pattern": "\\b(?:HTTP|status|error)\\s*(?:code)?\\s*:?\\s*([45]\\d{2})\\b"
+    },
+    {
+      "slot": "error_code",
+      "value": "err.generic",
+      "pattern": "\\berror\\s+code\\s*:?\\s*([A-Za-z0-9_\\-]{3,20})\\b"
+    },
+    {
+      "slot": "start_time",
+      "value": "stated",
+      "pattern": "\\b(\\d{1,3})\\s*(minute|min|hour|hr|day|week)s?\\s+(?:ago|pehle|pahle)\\b"
+    },
+    {
+      "slot": "start_time",
+      "value": "stated",
+      "pattern": "\\bsince\\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\\b"
+    },
+    {
+      "slot": "start_time",
+      "value": "stated",
+      "pattern": "\\b(\\d{4})-(\\d{2})-(\\d{2})(?:[ T](\\d{2}):(\\d{2}))?\\b"
+    },
+    {
+      "slot": "start_time",
+      "value": "stated",
+      "pattern": "\\b(?:since (?:this )?morning|this morning|subah se|aaj subah)\\b|सुबह से"
+    },
+    {
+      "slot": "start_time",
+      "value": "stated",
+      "pattern": "\\b(?:since today|today|aaj se|aaj)\\b|आज(?![\\u0900-\\u097F])"
+    },
+    {
+      "slot": "start_time",
+      "value": "stated",
+      "pattern": "\\b(?:since yesterday|yesterday)\\b"
+    },
+    {
+      "slot": "start_time",
+      "value": "stated",
+      "pattern": "\\bkal(?: se)?\\b|कल(?: से)?(?![\\u0900-\\u097F])"
+    },
+    {
+      "slot": "start_time",
+      "value": "stated",
+      "pattern": "\\b(?:since last week|last week|pichhle hafte|pichle hafte)\\b|पिछले हफ्ते"
+    }
+  ],
+  "security_pattern": "\\b(?:phish(?:ing|ed)?|ransomware|malware|virus|trojan|data breach|breach(?:ed)?|suspicious (?:link|e-?mail|attachment|login)|clicked (?:on )?(?:a |the )?(?:link|attachment)|account (?:was |got |is )?(?:hacked|compromised)|password (?:was |got )?(?:leaked|stolen)|unauthori[sz]ed access|hack ho gaya|hack ho gya|hack kar liya)\\b|फ़िशिंग|फिशिंग|हैक"
+}

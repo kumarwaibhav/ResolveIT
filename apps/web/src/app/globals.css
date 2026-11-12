@@ -1,0 +1,183 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (@media (prefers-color-scheme: dark));
+
+@theme inline {
+    --color-signal: var(--signal);
+    --color-ok: var(--ok);
+    --color-ok-surface: var(--ok-surface);
+    --color-warn: var(--warn);
+    --color-warn-surface: var(--warn-surface);
+    --color-risk: var(--risk);
+    --color-risk-surface: var(--risk-surface);
+    --color-info: var(--info);
+    --color-info-surface: var(--info-surface);
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --font-heading: var(--font-sans);
+    --font-sans: var(--font-sans);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+  ResolveIT tokens. One accent (signal teal) reserved for the primary action and for
+  evidence in the user's own text. State colours always travel with a text label.
+  Contrast figures are checked by scripts/check_contrast.mjs.
+*/
+:root {
+    --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari", sans-serif;
+    --radius: 0.5rem;
+    --background: #f6f7f8;
+    --foreground: #14181b;
+    --card: #ffffff;
+    --card-foreground: #14181b;
+    --popover: #ffffff;
+    --popover-foreground: #14181b;
+    --primary: #0b6468;
+    --primary-foreground: #ffffff;
+    --secondary: #eceff1;
+    --secondary-foreground: #14181b;
+    --muted: #eceff1;
+    --muted-foreground: #55606a;
+    --accent: #e3f1f1;
+    --accent-foreground: #0a4f52;
+    --destructive: #9b1c1c;
+    --border: #d9dee2;
+    --input: #b9c1c8;
+    --ring: #0b6468;
+    --signal: #0b6468;
+    --ok: #17603a;
+    --ok-surface: #e3f3ea;
+    --warn: #7a4b00;
+    --warn-surface: #fbefd5;
+    --risk: #9b1c1c;
+    --risk-surface: #fbe6e6;
+    --info: #1d4e89;
+    --info-surface: #e4eef9;
+    --chart-1: #0b6468;
+    --chart-2: #1d4e89;
+    --chart-3: #7a4b00;
+    --chart-4: #55606a;
+    --chart-5: #9b1c1c;
+    --sidebar: #ffffff;
+    --sidebar-foreground: #14181b;
+    --sidebar-primary: #0b6468;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #eceff1;
+    --sidebar-accent-foreground: #14181b;
+    --sidebar-border: #d9dee2;
+    --sidebar-ring: #0b6468;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #0f1315;
+        --foreground: #e8ecee;
+        --card: #161b1e;
+        --card-foreground: #e8ecee;
+        --popover: #161b1e;
+        --popover-foreground: #e8ecee;
+        --primary: #63cfc8;
+        --primary-foreground: #06201f;
+        --secondary: #1e2529;
+        --secondary-foreground: #e8ecee;
+        --muted: #1e2529;
+        --muted-foreground: #a3adb5;
+        --accent: #12302f;
+        --accent-foreground: #9fe3de;
+        --destructive: #f2a0a0;
+        --border: #2a3238;
+        --input: #4a565f;
+        --ring: #63cfc8;
+        --signal: #63cfc8;
+        --ok: #7fd6a4;
+        --ok-surface: #12301f;
+        --warn: #f0c36a;
+        --warn-surface: #3a2a08;
+        --risk: #f2a0a0;
+        --risk-surface: #3d1414;
+        --info: #9cc4f2;
+        --info-surface: #142a44;
+        --chart-1: #63cfc8;
+        --chart-2: #9cc4f2;
+        --chart-3: #f0c36a;
+        --chart-4: #a3adb5;
+        --chart-5: #f2a0a0;
+        --sidebar: #161b1e;
+        --sidebar-foreground: #e8ecee;
+        --sidebar-primary: #63cfc8;
+        --sidebar-primary-foreground: #06201f;
+        --sidebar-accent: #1e2529;
+        --sidebar-accent-foreground: #e8ecee;
+        --sidebar-border: #2a3238;
+        --sidebar-ring: #63cfc8;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+    html {
+        color-scheme: light dark;
+    }
+    body {
+        @apply bg-background text-foreground font-sans antialiased;
+    }
+    :focus-visible {
+        outline: 2px solid var(--ring);
+        outline-offset: 2px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+    @media (prefers-contrast: more) {
+        :root {
+            --border: currentColor;
+            --muted-foreground: var(--foreground);
+        }
+    }
+}
