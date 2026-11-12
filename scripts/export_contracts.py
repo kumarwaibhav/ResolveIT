@@ -18,11 +18,10 @@ ROOT = Path(__file__).resolve().parents[1]
 for p in ("apps/api", "packages/resolveit-core", "enterprise", "apps/worker"):
     sys.path.insert(0, str(ROOT / p))
 
-from resolveit_core.rules import engine  # noqa: E402
-from resolveit_core.schemas import Slot  # noqa: E402
-
 from resolveit_api.main import create_app  # noqa: E402
 from resolveit_api.settings import Settings  # noqa: E402
+from resolveit_core.rules import engine  # noqa: E402
+from resolveit_core.schemas import Slot  # noqa: E402
 
 
 def lexicon() -> dict[str, object]:

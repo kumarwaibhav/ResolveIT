@@ -116,7 +116,7 @@ def main() -> None:
             ctx = browser.new_context(viewport={"width": width, "height": 800}, color_scheme=scheme)
             page = ctx.new_page()
             errors: list[str] = []
-            page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+            page.on("console", lambda m, sink=errors: sink.append(m.text) if m.type == "error" else None)
             run(page, tag)
             real = [e for e in errors if "404" not in e]
             assert not real, f"console errors ({tag}): {real}"

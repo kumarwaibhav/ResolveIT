@@ -11,6 +11,7 @@ cd "$ROOT"
 python scripts/export_contracts.py
 (cd apps/web && npm run -s gen:types >/dev/null)
 git diff --exit-code -- apps/web/openapi.json apps/web/src/generated || { echo "generated contracts are stale"; exit 1; }
+ruff check scripts apps/web/e2e --config apps/api/pyproject.toml
 cd apps/web
 npx tsc --noEmit
 npx eslint .
