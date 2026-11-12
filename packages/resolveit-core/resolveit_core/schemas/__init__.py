@@ -201,6 +201,10 @@ class Decision(Frozen):
     probs: tuple[float, ...]
     conformal: ConformalResult
     team: Team | None = None
+    recommended_team: Team | None = Field(
+        default=None,
+        description="Cost-minimising team, shown to reviewers. A recommendation, not an auto-route.",
+    )
     ask_slot: Slot | None = None
     defer_reason: DeferReason | None = None
     r_route: float | None = Field(default=None, description="None encodes +infinity (route forbidden).")

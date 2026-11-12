@@ -4,4 +4,4 @@ set -euo pipefail
 cd "$(dirname "$0")/../../packages/resolveit-core"
 ruff check .
 mypy resolveit_core
-pytest -q
+python -m pytest -q

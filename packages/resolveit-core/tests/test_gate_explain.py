@@ -97,10 +97,13 @@ def test_confident_ticket_routes() -> None:
     assert math.isclose(out.r_route, 0.03 * 240.0) and out.r_now == out.r_route
 
 
-def test_empty_set_defers_before_anything_else() -> None:
-    out = decide(gate_input(np.full(K, 1.0 / K)))
+def test_empty_set_never_routes_but_may_still_ask() -> None:
+    flat = np.full(K, 1.0 / K)
+    out = decide(gate_input(flat, askable_slots=()))
     assert out.action is Action.DEFER and out.defer_reason is DeferReason.NO_CONFORMING_TEAM
-    assert out.conformal_set == ()
+    assert out.conformal_set == () and out.r_route == math.inf
+    asked = decide(gate_input(probs(k0=0.34, k2=0.33, k3=0.33), conformal=calibrator(0.5)))
+    assert asked.conformal_set == () and asked.action is Action.ASK and asked.ask_slot is Slot.SERVICE
 
 
 def test_informative_question_is_asked_and_holdout_suppresses_it() -> None:

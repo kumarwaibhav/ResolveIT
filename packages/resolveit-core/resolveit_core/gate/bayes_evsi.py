@@ -187,6 +187,8 @@ def ask_risk(inp: GateInput, slot: Slot, r_now: float) -> SlotRisk:
 
 
 def _defer_reason(inp: GateInput, cset: Sequence[int]) -> DeferReason:
+    if not cset:
+        return DeferReason.NO_CONFORMING_TEAM
     if inp.tau_hat is None:
         return DeferReason.SHADOW_MODE
     if len(cset) > MAX_ROUTABLE_SET_SIZE:
@@ -202,10 +204,8 @@ def decide(inp: GateInput) -> GateOutput:
     if probs.ndim != 1 or abs(float(probs.sum()) - 1.0) > 1e-6 or np.any(probs < 0):
         raise ValueError("probs must be a probability vector")
     cset = tuple(inp.conformal.predict_set(probs))
-    if not cset:
-        return GateOutput(
-            Action.DEFER, None, None, DeferReason.NO_CONFORMING_TEAM, math.inf, inp.costs.c_def, cset, ()
-        )
+    # An empty set forbids ROUTE (route_risk requires k in the set). A question may
+    # still be worth asking: a ticket with no evidence is the case ASK exists for.
     r_route, team = route_risk(probs, inp.costs, inp.tau_hat, cset, bool(inp.contradicted_critical))
     r_now = min(r_route, inp.costs.c_def)
     risks = tuple(ask_risk(inp, slot, r_now) for slot in inp.askable_slots if slot in inp.theta.values)
@@ -218,27 +218,31 @@ def decide(inp: GateInput) -> GateOutput:
     return GateOutput(Action.DEFER, None, None, _defer_reason(inp, cset), r_route, r_now, cset, risks)
 
 
-def finalize_after_answer(inp: GateInput, slot: Slot, answer: str | None) -> GateOutput:
-    """Close a clarification and decide ROUTE or DEFER. Never ASK again.
+def posterior_after_answer(
+    probs: FloatArray, theta: ThetaTable, slot: Slot, answer: str | None
+) -> tuple[FloatArray, bool]:
+    """Posterior over teams after a clarification, and whether the answer named a real value.
 
     answer=None means skip or timeout: no evidence arrived, so the prior is
     kept, exactly as the (1 - rho) branch of R_ask assumes. An explicit
     "unknown" (or an answer outside the option list) is evidence and is
-    applied through theta; it does not resolve a contradiction on the slot.
+    applied through theta, but it does not resolve a contradiction.
     """
-    prior = np.asarray(inp.probs, dtype=np.float64)
-    posterior = prior
-    remaining = inp.contradicted_critical
-    if answer is not None:
-        values = inp.theta.values[slot]
-        if answer not in values:
-            answer = UNKNOWN_ANSWER
-        p_answer, post = bayes_update(prior, inp.theta.theta(slot))
-        idx = values.index(answer)
-        if p_answer[idx] > 0:
-            posterior = post[idx]
-        if answer != UNKNOWN_ANSWER:
-            remaining = inp.contradicted_critical - {slot}
+    prior = np.asarray(probs, dtype=np.float64)
+    if answer is None:
+        return prior, False
+    values = theta.values[slot]
+    key = answer if answer in values else UNKNOWN_ANSWER
+    p_answer, post = bayes_update(prior, theta.theta(slot))
+    idx = values.index(key)
+    posterior = post[idx] if p_answer[idx] > 0 else prior
+    return posterior, key != UNKNOWN_ANSWER
+
+
+def finalize_after_answer(inp: GateInput, slot: Slot, answer: str | None) -> GateOutput:
+    """Close a clarification and decide ROUTE or DEFER. Never ASK again."""
+    posterior, informative = posterior_after_answer(inp.probs, inp.theta, slot, answer)
+    remaining = inp.contradicted_critical - {slot} if informative else inp.contradicted_critical
     updated = GateInput(
         probs=posterior,
         conformal=inp.conformal,
@@ -265,5 +269,6 @@ __all__ = [
     "bayes_update",
     "decide",
     "finalize_after_answer",
+    "posterior_after_answer",
     "route_risk",
 ]

@@ -123,9 +123,25 @@ def _digits(text: str) -> str:
     return "".join(ch for ch in text if ch.isdigit())
 
 
+def canonical_identifier(kind: PiiType, text: str) -> str:
+    """One canonical spelling per identifier, shared by the masker and erasure lookups."""
+    t = text.strip()
+    if kind is PiiType.EMAIL:
+        return t.lower()
+    if kind is PiiType.PHONE_IN:
+        return _digits(t)[-10:]
+    if kind in (PiiType.AADHAAR, PiiType.EMP_ID):
+        return _digits(t)
+    if kind is PiiType.PAN:
+        return t.upper()
+    if kind is PiiType.USER_NAME:
+        return " ".join(t.lower().split())
+    return t
+
+
 def _candidates(text: str, cfg: MaskerConfig) -> Iterable[PiiEntity]:
     for m in _EMAIL.finditer(text):
-        yield PiiEntity(PiiType.EMAIL, m.start(), m.end(), m.group().lower())
+        yield PiiEntity(PiiType.EMAIL, m.start(), m.end(), canonical_identifier(PiiType.EMAIL, m.group()))
     for m in _AADHAAR.finditer(text):
         d = _digits(m.group())
         if verhoeff_valid(d):
@@ -140,12 +156,16 @@ def _candidates(text: str, cfg: MaskerConfig) -> Iterable[PiiEntity]:
     for m in cfg.employee_id_pattern.finditer(text):
         yield PiiEntity(PiiType.EMP_ID, m.start(), m.end(), _digits(m.group()))
     for m in _NAME_CUES.finditer(text):
-        yield PiiEntity(PiiType.USER_NAME, m.start(1), m.end(1), m.group(1).lower())
+        yield PiiEntity(
+            PiiType.USER_NAME, m.start(1), m.end(1), canonical_identifier(PiiType.USER_NAME, m.group(1))
+        )
     for name in sorted(cfg.known_names, key=len, reverse=True):
         if not name:
             continue
         for m in re.finditer(rf"(?<!\w){re.escape(name)}(?!\w)", text, flags=re.IGNORECASE):
-            yield PiiEntity(PiiType.USER_NAME, m.start(), m.end(), name.lower())
+            yield PiiEntity(
+                PiiType.USER_NAME, m.start(), m.end(), canonical_identifier(PiiType.USER_NAME, name)
+            )
 
 
 def protected_spans(text: str) -> list[tuple[int, int]]:
@@ -184,6 +204,7 @@ __all__ = [
     "MaskerConfig",
     "PiiEntity",
     "PiiType",
+    "canonical_identifier",
     "mask_pii",
     "protected_spans",
     "verhoeff_check_digit",
