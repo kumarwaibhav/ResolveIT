@@ -173,7 +173,15 @@ def execute(command: list[str], cwd: Path, env: dict[str, str]) -> dict[str, Any
         }
 
 
+KEEP_ENGINE = False
+
+
 def engine(action: str, env: dict[str, str]) -> dict[str, Any]:
+    # --keep-engine: leave Docker Desktop running between gates. On some Windows hosts a
+    # stop leaves stale AF_UNIX socket files under %LOCALAPPDATA%/Docker/run that block the
+    # next start; keeping the engine up avoids that at the cost of ~2 GiB resident memory.
+    if KEEP_ENGINE:
+        return {"command": ["docker", "desktop", action], "exit_code": 0, "skipped": "keep-engine"}
     return execute(["docker", "desktop", action], ROOT, env)
 
 
@@ -186,8 +194,11 @@ def main() -> int:
     parser.add_argument("--expected-id", help="Trusted release-channel bundle identity; required for G2")
     parser.add_argument("--output", type=Path, default=ROOT / "artifacts/release-gates")
     parser.add_argument("--plan", action="store_true")
+    parser.add_argument("--keep-engine", action="store_true", help="do not stop/start Docker Desktop")
     args = parser.parse_args()
     selected = [gate for gate in GATES if gate in (args.gate or GATES)]
+    global KEEP_ENGINE
+    KEEP_ENGINE = args.keep_engine
     if args.plan:
         print(
             json.dumps(
@@ -229,6 +240,8 @@ def main() -> int:
             if gate in {"G3", "G5"}:
                 checks.append(engine("start", env))
                 engine_started = True
+            if gate == "G3":
+                checks.append(execute(["docker", "start", "resolveit-audit-pg"], ROOT, env))
             if gate == "G5":
                 checks.append(execute(["docker", "stop", "resolveit-audit-pg"], ROOT, env))
             if any(check["exit_code"] != 0 for check in checks):
