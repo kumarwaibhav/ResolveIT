@@ -47,4 +47,14 @@ describe("browser authorization boundary", () => {
     const result = await middleware(new NextRequest("https://resolve.example/api/incidents", { headers: { host: "resolve.example" } }));
     expect(result.status).toBe(401);
   });
+  it("serves the production sign-in page with security headers but redirects other pages", async () => {
+    delete process.env.RESOLVEIT_LOCAL_DEMO;
+    process.env.RESOLVEIT_PUBLIC_ORIGIN = "https://resolve.example";
+    const login = await middleware(new NextRequest("https://resolve.example/login", { headers: { host: "resolve.example" } }));
+    expect(login.status).toBe(200);
+    expect(login.headers.get("x-frame-options")).toBe("DENY");
+    const home = await middleware(new NextRequest("https://resolve.example/", { headers: { host: "resolve.example" } }));
+    expect(home.status).toBe(307);
+    expect(home.headers.get("location")).toBe("https://resolve.example/login");
+  });
 });

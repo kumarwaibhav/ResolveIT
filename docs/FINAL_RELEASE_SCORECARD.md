@@ -1,19 +1,27 @@
 # ResolveIT release scorecard — provisional
 
-Updated 2026-11-15, Asia/Calcutta. External production authorization: **false**.
-This scorecard separates executed phase receipts from the final G0–G6 rerun.
-It is not a production-readiness certificate. Final gates have not been executed
-by the isolated release gatekeeper while the single heavy-job slot belongs to ML.
+Updated 2026-11-17, Asia/Calcutta. External production authorization: **false**.
+This scorecard records the fresh G0–G6 run below and earlier phase receipts.
+It is not a production-readiness certificate.
 
-| Gate | Earlier executed evidence | Fresh final gate status |
+## Fresh gate run, 2026-11-17 (commits 75648b1 / f2612d7, bundle 968fd32c...)
+
+Runner: `scripts/ci_gates/run_all_gates.py --expected-id 968fd32c1e2b50b9dd7a5cd99ed458923137f4680454cd32c6fc5922adf5d238`
+(G3-G6 rerun with `--keep-engine` after Docker Desktop stale-socket start failures).
+
+| Gate | Result | Evidence |
 | --- | --- | --- |
-| G0 | 122 reachable historical blobs and local Git configuration scanned with bounded known-secret signatures; core Apache-2.0 boundary audited | NOT RUN; working tree still contains authorized uncommitted build work |
-| G1 | Core52 short tests; strict typing; governor18 tests; mathematical invariants covered by existing suites | NOT RUN; full slow statistical/property rerun required |
-| G2 | Actual synthetic32-input three-head INT8 fixture exported and verified;12 bundle adversarial tests | NOT RUN for pretrained release candidate; fixture is not pretrained model evidence |
-| G3 | PhaseB53 API tests,200 bounded cross-tenant read/write tasks,0004 up/down/up,15 isolated security checks | PhaseB PASSED; final source-frozen rerun NOT RUN |
-| G4 | Production14-page Next build/traces, six functional workspaces,12 axe scans at1440 light/320 dark with0 violations, live SDK/MRTR | PhaseC PASSED; final source-frozen rerun NOT RUN |
-| G5 | Three sequential Linux image builds; live capped Compose/PgBouncer stack and100 pooled transactions | PhaseD PASSED; final rerun NOT RUN |
-| G6 | Restore negative control plus external tombstone replay; same-code configuration cutover failure/rollback | PhaseD scoped PASSED; cross-version/schema rollback NOT VERIFIED |
+| G0 | PASSED | repo hygiene (Protocol members no longer flagged as stubs), history + staged secret scan 0 findings |
+| G1 | PASSED | ruff, strict mypy core + API/enterprise/worker, pytest core/scripts/release/training |
+| G2 | **FAILED (by design, honest)** | bundle verifies against pinned id; 128-token encoder p95 197 ms vs 50 ms target. Typical ticket full pipeline p50 40 / p95 45 ms. Needs distilled student (training v2) |
+| G3 | PASSED | migrations 0004 -> base -> 0004 round trip, API integration suite, security suite on PostgreSQL 16 |
+| G4 | PASSED | typecheck, lint, vitest, production build, live native runtime: official MCP SDK, MRTR, 12 axe scans 0 violations |
+| G5 | PASSED | API/web/PgBouncer Linux images built; live Compose stack drill |
+| G6 | PASSED (scoped) | same-run Stage D: same-code configuration rollback, restore/erasure tombstone replay; cross-version schema rollback NOT verified |
+
+Overall: **not production-authorized** (G2 latency target, synthetic provenance, no human gold).
+Live showcase smoke (`scripts/showcase_smoke.py`) passed: clear route, one-question route, compound ask,
+security escalation.
 
 ## Measured phase receipts
 

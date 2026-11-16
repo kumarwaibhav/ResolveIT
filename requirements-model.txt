@@ -1,0 +1,3 @@
+# Model-serving runtime for the trained INT8 bundle (API image / HF Space).
+onnxruntime==1.32.0
+tokenizers==0.22.2

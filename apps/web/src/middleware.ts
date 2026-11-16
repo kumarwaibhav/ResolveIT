@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
   if (!["GET", "HEAD", "OPTIONS"].includes(request.method) && !origin) {
     return NextResponse.json({ detail: "Same-origin browser action required" }, { status: 403 });
   }
-  if (!demo && request.nextUrl.pathname !== "/api/session") {
+  if (!demo && request.nextUrl.pathname !== "/api/session" && request.nextUrl.pathname !== "/login") {
     const credential = await openSession(request.cookies.get(SESSION_COOKIE)?.value);
     if (!credential) {
       if (request.nextUrl.pathname.startsWith("/api/")) {
@@ -65,4 +65,4 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ["/", "/api/:path*", "/incidents/:path*", "/review/:path*", "/bounce/:path*", "/evaluation/:path*", "/settings/:path*", "/mcp/:path*"] };
+export const config = { matcher: ["/", "/login", "/api/:path*", "/incidents/:path*", "/review/:path*", "/bounce/:path*", "/evaluation/:path*", "/settings/:path*", "/mcp/:path*"] };
