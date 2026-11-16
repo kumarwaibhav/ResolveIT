@@ -1,6 +1,6 @@
 """Live smoke test of the running showcase: healthz, four demo tickets, one clarification answer.
 
-Reads the demo API key from .env and never prints it. Loopback only.
+Reads the API key from .env (or a given env file) and never prints it.
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 API = "http://127.0.0.1:8000"
+ENV_FILE = ROOT / ".env"
 TICKETS = {
     "clear_english": "Outlook keeps crashing for the whole floor since this morning",
     "vague_hinglish": "kal se kuch bhi kaam nahi kar raha, please jaldi dekho",
@@ -26,7 +27,7 @@ TICKETS = {
 
 
 def key() -> str:
-    for line in (ROOT / ".env").read_text(encoding="utf-8-sig").splitlines():
+    for line in ENV_FILE.read_text(encoding="utf-8-sig").splitlines():
         if line.startswith("RESOLVEIT_API_KEY="):
             return line.split("=", 1)[1].strip()
     raise SystemExit("RESOLVEIT_API_KEY missing from .env")
@@ -62,7 +63,10 @@ def summary(view: dict) -> dict:
 
 
 def main() -> int:
-    with urllib.request.urlopen(API + "/healthz", timeout=10) as resp:
+    global API, ENV_FILE
+    if len(sys.argv) == 3:  # hosted check: showcase_smoke.py <api base url> <env file with RESOLVEIT_API_KEY>
+        API, ENV_FILE = sys.argv[1].rstrip("/"), Path(sys.argv[2])
+    with urllib.request.urlopen(API + "/healthz", timeout=90) as resp:
         health = json.loads(resp.read())
     print(json.dumps({"healthz": health}))
     ok = health.get("synthetic_bundle_kind") == "int8_trained_synthetic"

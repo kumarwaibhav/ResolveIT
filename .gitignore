@@ -23,3 +23,5 @@ next-env.d.ts
 docs/legacy_claude_handoff.txt
 artifacts/
 .runtime/
+
+.vercel/

@@ -1,43 +1,45 @@
-# Free hosted deployment (Vercel + Neon + Hugging Face Space)
+# Hosted deployment (free tiers): Vercel + Modal + Neon
 
-| Piece | Host | Notes |
-|---|---|---|
-| Web (Next.js, `apps/web`) | Vercel Hobby | production mode: individual API-key sign-in, HTTPS-only origin |
-| Postgres 16 | Neon free tier | direct (non-pooled) endpoint; RLS roles created by bootstrap |
-| API + worker + INT8 bundle | Hugging Face Docker Space (cpu-basic, 16 GB) | `infra/hf-space/`; migrates on boot; sleeps after ~48 h idle |
+Live:
+- Web: https://resolveit-one.vercel.app (Vercel Hobby, functions in `bom1` Mumbai)
+- API: https://kumarwaibhav--resolveit-api-web.ap-south.modal.run (Modal Starter: container in
+  `ap-southeast`, HTTPS ingress `ap-south`; scales to zero; worker sweep every 5 min)
+- Database: Neon Postgres 16, AWS Singapore (direct endpoint, TLS)
 
-Secrets never enter git or chat: they live in `artifacts/deploy/*.env` (gitignored) and are
-written straight into Hugging Face Space secrets and Vercel environment variables.
+| Piece | Why this host |
+|---|---|
+| Web | Next.js native; free HTTPS |
+| API + model | 315 MB INT8 bundle and ~1.3 GB RAM do not fit Vercel or Cloudflare Workers free limits; HF Docker Spaces now need PRO; Modal's free monthly credit covers demo traffic |
+| Postgres | RLS, SQL migrations, advisory locks need Postgres; Neon free suspends compute but wakes itself |
 
-## One-time sign-ins (owner)
-1. `vercel login`
-2. Hugging Face account + write token, then `hf auth login`
-3. Neon project (neon.tech or Vercel Storage -> Neon). Save the **direct** owner connection string as
-   `artifacts/deploy/neon.env` with one line: `NEON_OWNER_DSN=postgresql://...?sslmode=require`
+Secrets never enter git or chat: `artifacts/deploy/*.env` (gitignored) feed Modal secrets and Vercel
+environment variables directly. The Modal secret is least-privilege: app-role DB URL + master key only.
 
-## Deploy
+## Owner sign-ins (one-time)
+`vercel login`; `python -m modal setup`; Neon direct owner connection string saved as
+`artifacts/deploy/neon.env` (`NEON_OWNER_DSN=...`).
+
+## Deploy / redeploy
 ```powershell
-.venv\Scripts\python.exe scripts\deploy\prod_env.py                      # fresh prod secrets (kept on re-run)
-.venv\Scripts\python.exe scripts\deploy\assemble_hf_space.py --expected-id <bundle id>
-# 1) Vercel project first, to learn the HTTPS origin
-cd apps\web; vercel link --yes; cd ..\..
-# 2) API Space (needs the web origin for the MCP origin allowlist)
-.venv\Scripts\python.exe scripts\deploy\push_hf_space.py --bundle-id <bundle id> --web-origin https://<project>.vercel.app
-# 3) Web env + production deploy
-#    RESOLVEIT_API_URL=https://<user>-resolveit-api.hf.space, RESOLVEIT_PUBLIC_ORIGIN=https://<project>.vercel.app,
-#    RESOLVEIT_SESSION_KEY_B64 from prod.env, RESOLVEIT_LOCAL_DEMO=false
-cd apps\web; vercel deploy --prod
+.venv\Scripts\python.exe scripts\deploy\prod_env.py          # fresh prod secrets, kept on re-run
+.venv\Scripts\python.exe scripts\deploy\bootstrap_remote.py  # roles, migrations, synthetic tenant (idempotent)
+.venv\Scripts\python.exe scripts\deploy\push_modal.py --bundle-id <id> --web-origin https://resolveit-one.vercel.app
+.venv\Scripts\python.exe scripts\deploy\vercel_env.py --api-url <modal url> --origin https://resolveit-one.vercel.app
+cd apps\web; vercel deploy --prod --yes
 ```
 
-Sign in at `https://<project>.vercel.app/login` with `RESOLVEIT_API_KEY` from `prod.env` (admin of the
-synthetic demo tenant). Share that key only with people who should see the demo; rotate by running
-bootstrap with a new key and revoking the old one.
-
 ## Verify
-- `https://<user>-resolveit-api.hf.space/healthz` -> `int8_trained_synthetic` and the pinned bundle id.
-- Sign in, paste the four tickets from `docs/DEMO_WALKTHROUGH.md`.
+```powershell
+.venv\Scripts\python.exe scripts\showcase_smoke.py <modal url> artifacts\deploy\prod.env
+```
+Last run 2026-11-17: healthz `int8_trained_synthetic` bundle 968fd32c; clear ticket routed, vague
+ticket asked then routed, compound asked, security escalated; ~1 s per ticket warm.
+
+Sign in at https://resolveit-one.vercel.app/login with `RESOLVEIT_API_KEY` from `artifacts/deploy/prod.env`.
 
 ## Limits stated honestly
-- Free Space sleeps after ~48 h without traffic; first request then waits ~30-60 s for the image.
-- Synthetic tenant only; real tenants remain shadow-mode. G2 128-token latency target not met.
-- Neon free tier: 0.5 GB storage, compute auto-suspends (first query after idle ~1 s slower).
+- Cold start after ~10 min idle: first request waits ~15-30 s while the container loads the model.
+- Neon free: 0.5 GB; compute auto-suspends (first query after idle ~1 s slower).
+- Modal Starter credit: if exhausted, the API stops (no charge) until the monthly reset.
+- Synthetic tenant only; real tenants stay shadow-mode. G2 128-token latency target not met.
+- `infra/hf-space/` is kept as an alternative host (needs HF PRO).

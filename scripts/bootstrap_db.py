@@ -33,6 +33,10 @@ async def bootstrap() -> None:
         await admin.execute("CREATE ROLE resolveit_auth NOLOGIN NOSUPERUSER BYPASSRLS")
     await admin.execute("GRANT resolveit_auth TO resolveit_migrator WITH ADMIN OPTION")
     database_name = await admin.fetchval("SELECT quote_ident(current_database())")
+    if not await admin.fetchval("SELECT rolsuper FROM pg_roles WHERE rolname = current_user"):
+        # Managed Postgres (e.g. Neon) admin roles have CREATEROLE, not superuser. PG16 needs
+        # SET membership in the new owner before ALTER DATABASE ... OWNER TO it.
+        await admin.execute("GRANT resolveit_migrator TO CURRENT_USER WITH SET TRUE, INHERIT FALSE")
     await admin.execute(f"ALTER DATABASE {database_name} OWNER TO resolveit_migrator")
     await admin.close()
     await asyncio.to_thread(subprocess.run, [sys.executable, "-m", "alembic", "upgrade", "head"], check=True)
