@@ -15,6 +15,7 @@ from resolveit_core.gate.bayes_evsi import (
     ThetaTable,
     bayes_update,
     decide,
+    experiment_assignment,
     finalize_after_answer,
 )
 from resolveit_core.schemas import N_TEAMS, SLOTS, UNKNOWN_ANSWER, Action, DeferReason, Slot
@@ -61,6 +62,8 @@ def gate_input(p: np.ndarray, **kw: object) -> GateInput:
         askable_slots=(Slot.SERVICE, Slot.SCOPE),
         contradicted_critical=frozenset(),
         tau_hat=0.80,
+        answer_tau_hat=0.80,  # fixture assumes separately certified answer population
+        answer_conformal=calibrator(),
     )
     base.update(kw)
     return GateInput(**base)  # type: ignore[arg-type]
@@ -97,13 +100,14 @@ def test_confident_ticket_routes() -> None:
     assert math.isclose(out.r_route, 0.03 * 240.0) and out.r_now == out.r_route
 
 
-def test_empty_set_never_routes_but_may_still_ask() -> None:
+def test_empty_set_immediately_defers_without_asking() -> None:
     flat = np.full(K, 1.0 / K)
     out = decide(gate_input(flat, askable_slots=()))
     assert out.action is Action.DEFER and out.defer_reason is DeferReason.NO_CONFORMING_TEAM
     assert out.conformal_set == () and out.r_route == math.inf
     asked = decide(gate_input(probs(k0=0.34, k2=0.33, k3=0.33), conformal=calibrator(0.5)))
-    assert asked.conformal_set == () and asked.action is Action.ASK and asked.ask_slot is Slot.SERVICE
+    assert asked.conformal_set == () and asked.action is Action.DEFER
+    assert asked.defer_reason is DeferReason.NO_CONFORMING_TEAM
 
 
 def test_informative_question_is_asked_and_holdout_suppresses_it() -> None:
@@ -120,9 +124,9 @@ def test_informative_question_is_asked_and_holdout_suppresses_it() -> None:
 def test_low_response_rate_stops_asking() -> None:
     p = probs(k0=0.45, k2=0.45)
     ghosted = ChannelCosts(c_ask=2.0, c_ghost=600.0, asks=200, answers=4)
-    assert ghosted.rho < 0.03
+    assert ghosted.rho < 0.04
     assert decide(gate_input(p, channel=ghosted)).action is Action.DEFER
-    assert ChannelCosts(1.0, 1.0).rho == 0.5
+    assert ChannelCosts(1.0, 1.0).rho == 4 / 6
 
 
 def test_shadow_mode_never_routes() -> None:
@@ -197,3 +201,44 @@ def test_head_feeds_the_gate_end_to_end() -> None:
     p = h.probs(np.zeros(4), {Slot.SERVICE: "vpn", Slot.SCOPE: "org_wide"}, temperature=0.5)
     out = decide(gate_input(p, askable_slots=()))
     assert out.action is Action.ROUTE and out.team == 0
+
+
+def test_cold_start_exploration_is_stable_and_holdout_never_asks() -> None:
+    flat = np.full(K, 1 / K)
+    cold = ThetaTable(VALUES)
+    keys = [f"tenant-a:{i}" for i in range(2000)]
+    selected = [key for key in keys if experiment_assignment(key)[1]]
+    held = [key for key in keys if experiment_assignment(key)[0]]
+    assert 50 < len(selected) < 140
+    assert 140 < len(held) < 260
+    for key in selected[:20]:
+        inp = gate_input(flat, theta=cold, tau_hat=None, conformal=calibrator(1),
+                         exploration_key=key, critical_missing_slots=frozenset({Slot.SERVICE}))
+        out = decide(inp)
+        assert out.action is Action.ASK and out.ask_slot is Slot.SERVICE
+        assert finalize_after_answer(inp, Slot.SERVICE, "vpn").action is Action.DEFER
+    for key in held[:20]:
+        assert decide(gate_input(flat, theta=cold, tau_hat=None, conformal=calibrator(1),
+                                 exploration_key=key, critical_missing_slots=frozenset({Slot.SERVICE}))).action is Action.DEFER
+
+
+def test_queue_shadow_does_not_borrow_global_certificate() -> None:
+    p = probs(k0=0.97)
+    out = decide(gate_input(p, askable_slots=(), queue_tau_hat={0: None, 1: 0.8}))
+    assert out.action is Action.DEFER
+    assert decide(gate_input(p, tau_hat=None, askable_slots=(), queue_tau_hat={0: 0.8})).action is Action.ROUTE
+
+
+def test_answer_does_not_borrow_preanswer_certificate() -> None:
+    inp = gate_input(probs(k0=0.45, k2=0.45), answer_tau_hat=None, answer_conformal=None)
+    out = finalize_after_answer(inp, Slot.SERVICE, "vpn")
+    assert out.action is Action.DEFER and out.defer_reason is DeferReason.SHADOW_MODE
+
+
+def test_nonfinite_probabilities_and_costs_are_rejected() -> None:
+    import pytest
+
+    with pytest.raises(ValueError):
+        decide(gate_input(np.full(K, np.nan)))
+    with pytest.raises(ValueError):
+        CostMatrix.uniform(float("nan"), 45)

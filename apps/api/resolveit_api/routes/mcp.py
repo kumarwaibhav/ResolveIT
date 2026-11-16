@@ -26,17 +26,19 @@ import time
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, Request
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi.responses import JSONResponse, Response
 from resolveit_core.schemas import UNKNOWN_ANSWER, Channel, EpistemicState
 from resolveit_core.schemas.api import IncidentCreate, IncidentView
 from resolveit_enterprise.privacy.crypto_shredder import SealedText, unseal
 from sqlalchemy import text
 
 from resolveit_api.auth import Principal, require_role
+from resolveit_api.review_privacy import record_exposure
 from resolveit_api.routes.intake import close_question, load_view, submit
 
 PROTOCOL_VERSION = "2026-07-28"
+STANDARD_VERSION = "2025-11-25"
 SERVER_INFO = {"name": "resolveit", "version": "0.1.0"}
 META_VERSION = "io.modelcontextprotocol/protocolVersion"
 META_CAPS = "io.modelcontextprotocol/clientCapabilities"
@@ -76,8 +78,11 @@ TOOL = {
 
 
 class McpError(Exception):
-    def __init__(self, code: int, message: str, http_status: int = 400) -> None:
+    def __init__(
+        self, code: int, message: str, http_status: int = 400, data: dict[str, Any] | None = None
+    ) -> None:
         self.code, self.message, self.http_status = code, message, http_status
+        self.data = data
 
 
 def _b64(data: bytes) -> str:
@@ -100,6 +105,8 @@ def sign_state(key: bytes, payload: dict[str, Any]) -> str:
 def verify_state(key: bytes, token: str, who: Principal, digest: str, now: float) -> UUID:
     """Return the incident ID, or raise. Checks integrity, expiry, principal and originating arguments."""
     try:
+        if len(token) > 8192:
+            raise ValueError("state too large")
         body_b64, mac_b64 = token.split(".")
         body = _unb64(body_b64)
         good = hmac.compare_digest(_unb64(mac_b64), hmac.new(key, body, hashlib.sha256).digest())
@@ -108,13 +115,25 @@ def verify_state(key: bytes, token: str, who: Principal, digest: str, now: float
         payload = None
     if not isinstance(payload, dict):
         raise McpError(ERR_PARAMS, "requestState failed verification")
-    if payload.get("exp", 0) < now:
+    expiry = payload.get("exp")
+    if (
+        not isinstance(expiry, (int, float))
+        or isinstance(expiry, bool)
+        or not now < expiry <= now + STATE_TTL_SECONDS
+    ):
         raise McpError(ERR_PARAMS, "requestState has expired; call the tool again without it")
-    if payload.get("t") != str(who.tenant_id) or payload.get("r") != who.role:
+    if (
+        payload.get("t") != str(who.tenant_id)
+        or payload.get("r") != who.role
+        or payload.get("p", "") != who.key_fingerprint
+    ):
         raise McpError(ERR_PARAMS, "requestState was issued to a different principal")
     if payload.get("d") != digest:
         raise McpError(ERR_PARAMS, "requestState does not belong to this request")
-    return UUID(payload["i"])
+    try:
+        return UUID(payload["i"])
+    except (KeyError, TypeError, ValueError, AttributeError) as exc:
+        raise McpError(ERR_PARAMS, "requestState contains an invalid incident") from exc
 
 
 def _result(req_id: Any, result: dict[str, Any], traceparent: str | None) -> JSONResponse:
@@ -125,8 +144,11 @@ def _result(req_id: Any, result: dict[str, Any], traceparent: str | None) -> JSO
 
 
 def _error(req_id: Any, err: McpError) -> JSONResponse:
+    payload: dict[str, Any] = {"code": err.code, "message": err.message}
+    if err.data is not None:
+        payload["data"] = err.data
     return JSONResponse(
-        {"jsonrpc": "2.0", "id": req_id, "error": {"code": err.code, "message": err.message}},
+        {"jsonrpc": "2.0", "id": req_id, "error": payload},
         status_code=err.http_status,
     )
 
@@ -230,7 +252,8 @@ def _cited_answer(response: Any, raw_text: str | None) -> str | None:
         isinstance(quote, str)
         and len(quote.strip()) >= 2
         and raw_text is not None
-        and quote.strip().casefold() in raw_text.casefold()
+        and quote.strip() in raw_text
+        and re.sub(r"[^\w]", "", answer.casefold()) in re.sub(r"[^\w]", "", quote.casefold())
     )
     return answer if cited else UNKNOWN_ANSWER
 
@@ -261,6 +284,7 @@ async def _call_tool(app: Any, who: Principal, params: dict[str, Any]) -> dict[s
                 "i": str(incident_id),
                 "t": str(who.tenant_id),
                 "r": who.role,
+                "p": who.key_fingerprint,
                 "d": digest,
                 "exp": int(time.time()) + STATE_TTL_SECONDS,
             },
@@ -272,6 +296,7 @@ async def _call_tool(app: Any, who: Principal, params: dict[str, Any]) -> dict[s
             raise McpError(ERR_PARAMS, "requestState must be a string")
         incident_id = verify_state(key, token, who, digest, time.time())
         async with app.db.tenant_tx(who.tenant_id) as session:
+            await record_exposure(session, who.tenant_id, incident_id, who.human_subject_id)
             view = await load_view(app, session, who.tenant_id, incident_id)
         if view.question is None:
             return _complete(view)  # already closed: a replayed retry gets the stored outcome
@@ -279,29 +304,35 @@ async def _call_tool(app: Any, who: Principal, params: dict[str, Any]) -> dict[s
         if not isinstance(responses, dict) or INPUT_KEY not in responses:
             return _input_required(view, state_for(incident_id))  # ask again rather than fail
         answer = _cited_answer(responses[INPUT_KEY], await _raw_text(app, who.tenant_id, incident_id))
-        return _complete(await close_question(app, who.tenant_id, who.role, incident_id, answer))
+        try:
+            return _complete(await close_question(app, who.tenant_id, "agent", incident_id, answer))
+        except HTTPException as exc:
+            if exc.status_code != 409:
+                raise
+            async with app.db.tenant_tx(who.tenant_id) as session:
+                return _complete(await load_view(app, session, who.tenant_id, incident_id))
 
-    idem = hashlib.sha256(f"{who.role}|{TOOL['name']}|{digest}".encode()).hexdigest()
+    client_key = (params.get("_meta") or {}).get("resolveit/idempotencyKey")
+    if client_key is not None and (not isinstance(client_key, str) or not 1 <= len(client_key) <= 128):
+        raise McpError(ERR_PARAMS, "resolveit/idempotencyKey must be a string of 1..128 characters")
+    idem = (
+        hashlib.sha256(f"{who.key_fingerprint}|{who.role}|{TOOL['name']}|{client_key}".encode()).hexdigest()
+        if client_key is not None
+        else None
+    )
+    try:
+        current = await submit(app, who.tenant_id, body, idempotency_key=idem)
+    except HTTPException as exc:
+        if exc.status_code == 409:
+            raise McpError(ERR_PARAMS, "idempotency key reused with different arguments") from exc
+        raise
     async with app.db.tenant_tx(who.tenant_id) as session:
-        existing = (
-            await session.execute(text("SELECT incident_id FROM mcp_calls WHERE idem_key = :k"), {"k": idem})
-        ).scalar_one_or_none()
-        current = await load_view(app, session, who.tenant_id, existing) if existing else None
-    if current is None:
-        current = await submit(app, who.tenant_id, body)
-        async with app.db.tenant_tx(who.tenant_id) as session:
-            await session.execute(
-                text(
-                    "INSERT INTO mcp_calls (tenant_id, idem_key, incident_id) VALUES (:t, :k, :i) "
-                    "ON CONFLICT DO NOTHING"
-                ),
-                {"t": who.tenant_id, "k": idem, "i": current.id},
-            )
+        await record_exposure(session, who.tenant_id, current.id, who.human_subject_id)
     if current.question is None:
         return _complete(current)
     if not can_elicit:
         # The client did not declare elicitation, so the server must not send one. Close as skipped.
-        return _complete(await close_question(app, who.tenant_id, who.role, current.id, None))
+        return _complete(await close_question(app, who.tenant_id, "agent", current.id, None))
     return _input_required(current, state_for(current.id))
 
 
@@ -312,9 +343,12 @@ async def mcp(
     mcp_protocol_version: Annotated[str | None, Header()] = None,
     mcp_method: Annotated[str | None, Header()] = None,
     mcp_name: Annotated[str | None, Header()] = None,
-) -> JSONResponse:
+) -> Response:
     req_id: Any = None
     try:
+        origin = request.headers.get("origin")
+        if origin is not None and origin not in request.app.state.settings.allowed_origins:
+            raise McpError(ERR_INVALID_REQUEST, "Origin is not allowed", http_status=403)
         try:
             msg = await request.json()
         except ValueError as exc:
@@ -322,17 +356,66 @@ async def mcp(
         if not isinstance(msg, dict) or msg.get("jsonrpc") != "2.0" or not isinstance(msg.get("method"), str):
             raise McpError(ERR_INVALID_REQUEST, "not a JSON-RPC 2.0 request")
         req_id, method = msg.get("id"), msg["method"]
-        params = msg.get("params") or {}
+        if "id" in msg and (isinstance(req_id, bool) or not isinstance(req_id, (str, int))):
+            raise McpError(ERR_INVALID_REQUEST, "request id must be a string or integer")
+        params = msg.get("params", {})
         if not isinstance(params, dict):
             raise McpError(ERR_PARAMS, "params must be an object")
-        meta = params.get("_meta") or {}
+        meta = params.get("_meta", {})
+        if not isinstance(meta, dict):
+            raise McpError(ERR_PARAMS, "params._meta must be an object")
+        if mcp_protocol_version and meta.get(META_VERSION) and meta[META_VERSION] != mcp_protocol_version:
+            raise McpError(ERR_HEADER_MISMATCH, "MCP-Protocol-Version header and _meta disagree")
+        # Legacy Streamable HTTP clients use initialization and no MRTR metadata.
+        # Stateless operation intentionally does not issue an MCP-Session-Id.
+        standard = method == "initialize" or mcp_protocol_version == STANDARD_VERSION
+        if standard:
+            if method == "initialize":
+                if not isinstance(params.get("protocolVersion"), str):
+                    raise McpError(ERR_PARAMS, "initialize requires protocolVersion")
+                return _result(
+                    req_id,
+                    {
+                        "protocolVersion": STANDARD_VERSION,
+                        "capabilities": {"tools": {}},
+                        "serverInfo": SERVER_INFO,
+                    },
+                    None,
+                )
+            if method in {"notifications/initialized", "notifications/cancelled"} and "id" not in msg:
+                return Response(status_code=202)
+            if "id" not in msg:
+                raise McpError(ERR_INVALID_REQUEST, "method requires a request id")
+            if method == "ping":
+                return _result(req_id, {}, None)
+            if method == "tools/list":
+                return _result(req_id, {"tools": [TOOL]}, None)
+            if method == "tools/call":
+                # Legacy clients receive a complete result; clarification is human-gated.
+                legacy_params = {
+                    **params,
+                    "_meta": {"resolveit/idempotencyKey": meta.get("resolveit/idempotencyKey")},
+                }
+                legacy_params.pop("requestState", None)
+                legacy_params.pop("inputResponses", None)
+                result = await _call_tool(request.app.state, who, legacy_params)
+                result.pop("resultType", None)
+                return _result(req_id, result, None)
+            raise McpError(ERR_METHOD, f"method not supported: {method}", http_status=404)
         if (
             mcp_protocol_version != PROTOCOL_VERSION
             or meta.get(META_VERSION, PROTOCOL_VERSION) != PROTOCOL_VERSION
         ):
             if mcp_protocol_version and meta.get(META_VERSION) and mcp_protocol_version != meta[META_VERSION]:
                 raise McpError(ERR_HEADER_MISMATCH, "MCP-Protocol-Version header and _meta disagree")
-            raise McpError(ERR_UNSUPPORTED_VERSION, f"supported protocol version: {PROTOCOL_VERSION}")
+            raise McpError(
+                ERR_UNSUPPORTED_VERSION,
+                f"supported protocol version: {PROTOCOL_VERSION}",
+                data={
+                    "supported": [PROTOCOL_VERSION, STANDARD_VERSION],
+                    "requested": mcp_protocol_version or str(meta.get(META_VERSION, "")),
+                },
+            )
         if META_VERSION not in meta:
             raise McpError(ERR_INVALID_REQUEST, f"params._meta must carry {META_VERSION}")
         if mcp_method != method:
@@ -348,6 +431,8 @@ async def mcp(
                 {
                     "resultType": "complete",
                     "supportedVersions": [PROTOCOL_VERSION],
+                    "ttlMs": 300_000,
+                    "cacheScope": "public",
                     "capabilities": {"tools": {}},
                     "serverInfo": SERVER_INFO,
                 },

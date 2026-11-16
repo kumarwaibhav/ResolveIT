@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncpg
 import httpx
 
-from .conftest import auth
+from .conftest import KEYS, auth, exploratory_incident
 
 AMBIGUOUS_TEXT = "it stopped working this morning, please help"
 
@@ -37,23 +37,30 @@ async def test_real_tenant_is_shadow_mode_and_never_auto_routes(client: httpx.As
 
 
 async def test_demo_tenant_routes_a_clear_ticket_with_faithful_evidence(client: httpx.AsyncClient) -> None:
-    text = "😀 VPN is down again for the whole floor"
+    text = "😀 database is down again for the whole floor"
     out = await _post(client, "demo_admin", text)
     d = out["decision"]
     assert out["is_synthetic_tenant"] is True and d["bundle_id"].startswith("synthetic-demo-")
-    assert d["action"] == "ROUTE" and d["team"] == "Network" and out["state"] == "ROUTED"
+    assert d["action"] == "ROUTE" and d["team"] == "Database" and out["state"] == "ROUTED"
     assert (
-        "Network" in d["conformal"]["teams"]
+        "Database" in d["conformal"]["teams"]
         and len(d["conformal"]["teams"]) <= 3
         and d["tau_hat"] is not None
     )
     top = d["attributions"][0]
-    assert top["slot"] == "service" and top["value"] == "vpn" and top["delta_p"] > 0.5
+    assert top["slot"] == "service" and top["value"] == "database" and top["delta_p"] > 0.5
     service = next(s for s in out["frame"] if s["slot"] == "service")
     span = service["evidence"][0]
     utf16 = text.encode("utf-16-le")
-    assert utf16[span["start"] * 2 : span["end"] * 2].decode("utf-16-le") == "VPN"  # as a browser slices it
+    assert utf16[span["start"] * 2 : span["end"] * 2].decode("utf-16-le") == "database"
     assert span["start"] == 3  # the emoji is two UTF-16 units; code-point offset would be 2
+
+
+async def test_demo_unsupported_queue_remains_human_gated(client: httpx.AsyncClient) -> None:
+    out = await _post(client, "demo_admin", "VPN is down again for the whole floor")
+    assert out["state"] == "DEFERRED" and out["routed_team"] is None
+    assert out["decision"]["tau_hat"] is None
+    assert out["decision"]["recommended_team"] == "Network"
 
 
 async def test_persist_first_encrypted_at_rest_and_masked(
@@ -85,12 +92,11 @@ async def test_persist_first_encrypted_at_rest_and_masked(
 
 
 async def _ask(client: httpx.AsyncClient, key: str = "demo_admin", **extra: str) -> dict:
-    """Submit until the ticket is not in the 10% no-ask holdout."""
-    for _ in range(60):
+    """Submit a ticket whose persisted ID belongs to deterministic exploration."""
+    with exploratory_incident(KEYS[key][0]):
         out = await _post(client, key, AMBIGUOUS_TEXT, **extra)
-        if not out["decision"]["no_ask_holdout"]:
-            return out
-    raise AssertionError("always in holdout")
+    assert out["decision"]["action"] == "ASK"
+    return out
 
 
 async def test_vague_ticket_exists_before_the_question_and_gets_exactly_one(
@@ -109,8 +115,8 @@ async def test_vague_ticket_exists_before_the_question_and_gets_exactly_one(
         f"/v1/incidents/{out['id']}/answer", json={"answer": "vpn"}, headers=auth("demo_admin")
     )
     done = r.json()
-    assert r.status_code == 200 and done["state"] == "ROUTED" and done["routed_team"] == "Network"
-    assert done["question"] is None and done["decision"]["action"] == "ROUTE"
+    assert r.status_code == 200 and done["state"] == "DEFERRED" and done["routed_team"] is None
+    assert done["question"] is None and done["decision"]["action"] == "DEFER"
     assert next(s for s in done["frame"] if s["slot"] == "service")["value"] == "vpn"
     r2 = await client.post(
         f"/v1/incidents/{out['id']}/answer", json={"answer": "email"}, headers=auth("demo_admin")
@@ -163,20 +169,41 @@ async def test_security_trigger_is_flagged_and_recommended_to_security(client: h
     out = await _post(client, "demo_admin", "I clicked on a link in a suspicious email, account got hacked")
     assert out["security_trigger"] is True
     assert out["decision"]["recommended_team"] == "Security"
+    # Security bypasses ordinary routing: no clarifying question, no auto-route, human now.
+    assert out["state"] == "DEFERRED" and out["question"] is None
+    assert out["decision"]["defer_reason"] == "security_escalation"
 
 
-async def test_agent_answer_is_recorded_as_agent_asserted(
+async def test_agent_answer_requires_mcp_citations(
     client: httpx.AsyncClient, app_conn: asyncpg.Connection
 ) -> None:
     out = await _ask(client, key="demo_agent", channel="agent")
-    await client.post(
+    response = await client.post(
         f"/v1/incidents/{out['id']}/answer", json={"answer": "wifi"}, headers=auth("demo_agent")
     )
     tenant = await _tenant_of(app_conn, "demo_agent")
     q = await _row(
         app_conn, tenant, "SELECT outcome, answer_source FROM questions WHERE incident_id = $1", out["id"]
     )
-    assert q is not None and q["outcome"] == "answered" and q["answer_source"] == "agent_asserted"
+    assert response.status_code == 403
+    assert q is not None and q["outcome"] == "pending" and q["answer_source"] is None
+
+
+async def test_final_decision_wins_when_database_wall_clock_moves_backwards(
+    client: httpx.AsyncClient, app_conn: asyncpg.Connection
+) -> None:
+    out = await _ask(client)
+    await client.post(f"/v1/incidents/{out['id']}/answer", json={"answer": "vpn"}, headers=auth("demo_admin"))
+    tenant = await _tenant_of(app_conn, "demo_admin")
+    async with app_conn.transaction():
+        await app_conn.execute("SELECT set_config('app.current_tenant_id',$1,true)", tenant)
+        await app_conn.execute(
+            "UPDATE decisions SET created_at=now()+interval '1 day' WHERE incident_id=$1 AND stage='initial'",
+            out["id"],
+        )
+    view = (await client.get(f"/v1/incidents/{out['id']}", headers=auth("demo_admin"))).json()
+    assert view["state"] == "DEFERRED" and view["decision"]["action"] == "DEFER"
+    assert view["decision"]["tau_hat"] is None
 
 
 async def test_erasure_crypto_shreds_every_incident_of_the_subject(

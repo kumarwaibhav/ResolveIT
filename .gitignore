@@ -19,3 +19,7 @@ mlruns/
 .env.local
 next-env.d.ts
 *.tsbuildinfo
+
+docs/legacy_claude_handoff.txt
+artifacts/
+.runtime/

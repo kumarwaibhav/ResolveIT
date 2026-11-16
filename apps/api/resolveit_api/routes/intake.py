@@ -10,6 +10,8 @@ Ticket text is never logged.
 
 from __future__ import annotations
 
+import asyncio
+import hashlib
 import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
@@ -17,7 +19,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from resolveit_core.frame.merger import apply_answer
-from resolveit_core.gate.bayes_evsi import ChannelCosts
+from resolveit_core.gate.bayes_evsi import ChannelCosts, experiment_assignment
 from resolveit_core.masking.pii_shield import PiiType, canonical_identifier, mask_pii
 from resolveit_core.offsets.offset_map import Utf16Index, normalize_nfkc
 from resolveit_core.schemas import (
@@ -45,7 +47,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from resolveit_api.auth import Principal, require_role
 from resolveit_api.bundles import Bundle
+from resolveit_api.delivery import enqueue_route
 from resolveit_api.pipeline import channel_costs, evaluate, finalize
+from resolveit_api.review_privacy import record_exposure
 
 router = APIRouter(prefix="/v1")
 _rng = secrets.SystemRandom()
@@ -131,22 +135,28 @@ async def _store_frame(
 
 async def _close(session: AsyncSession, incident_id: UUID, decision: Decision) -> str:
     state = "ROUTED" if decision.action is Action.ROUTE else "DEFERRED"
-    await session.execute(
+    updated = await session.execute(
         text(
             "UPDATE incidents SET state = :s, routed_team = :team, clarify_deadline = NULL, "
             "version = version + 1 WHERE id = :i AND state = 'PENDING_CLARIFICATION'"
+            " RETURNING tenant_id, version"
         ),
         {"s": state, "team": decision.team.value if decision.team else None, "i": incident_id},
     )
+    row = updated.first()
+    if row is not None and state == "ROUTED" and decision.team is not None:
+        await enqueue_route(session, row[0], incident_id, row[1], decision.team.value)
     return state
 
 
-async def submit(app: Any, tenant_id: UUID, body: IncidentCreate) -> IncidentView:
+async def submit(
+    app: Any, tenant_id: UUID, body: IncidentCreate, *, idempotency_key: str | None = None
+) -> IncidentView:
     """Persist the incident, then evaluate it. Shared by REST and MCP."""
     now = datetime.now(UTC)
     incident_id = uuid4()
     audit = _rng.random() < app.settings.audit_rate  # drawn before any decision exists
-    holdout = _rng.random() < app.settings.holdout_rate
+    holdout = experiment_assignment(f"{tenant_id}:{incident_id}")[0]
     minutes = (
         app.settings.web_clarify_minutes
         if body.channel in (Channel.WEB, Channel.CHAT, Channel.AGENT)
@@ -155,8 +165,27 @@ async def submit(app: Any, tenant_id: UUID, body: IncidentCreate) -> IncidentVie
     normalised, _ = normalize_nfkc(body.text)
     mask = mask_pii(normalised)
     sealed = seal(app.wrapper, tenant_id, incident_id, body.text)
+    request_digest = hashlib.sha256(body.model_dump_json().encode()).hexdigest()
 
     async with app.db.tenant_tx(tenant_id) as session:
+        if idempotency_key is not None:
+            # Transaction-scoped lock works behind PgBouncer; claim and incident commit together.
+            await session.execute(
+                text("SELECT pg_advisory_xact_lock(hashtextextended(:k, 0))"),
+                {"k": f"{tenant_id}:{idempotency_key}"},
+            )
+            existing = (
+                await session.execute(
+                    text("SELECT incident_id, request_digest FROM mcp_calls WHERE idem_key = :k"),
+                    {"k": idempotency_key},
+                )
+            ).first()
+            if existing is not None:
+                if existing[1] != request_digest:
+                    raise HTTPException(
+                        status.HTTP_409_CONFLICT, "idempotency key reused with different arguments"
+                    )
+                return await load_view(app, session, tenant_id, existing[0])
         timezone, is_synthetic = await _tenant(session, tenant_id)
         await session.execute(
             text(
@@ -204,12 +233,43 @@ async def submit(app: Any, tenant_id: UUID, body: IncidentCreate) -> IncidentVie
                     "i": incident_id,
                 },
             )
+        if idempotency_key is not None:
+            await session.execute(
+                text(
+                    "INSERT INTO mcp_calls (tenant_id, idem_key, incident_id, request_digest) "
+                    "VALUES (:t, :k, :i, :d)"
+                ),
+                {"t": tenant_id, "k": idempotency_key, "i": incident_id, "d": request_digest},
+            )
+        split_bucket = (
+            int.from_bytes(hashlib.sha256(f"review-split:v1:{tenant_id}:{incident_id}".encode()).digest()[:8])
+            % 10
+        )
+        review_split = (
+            ("scaling" if split_bucket < 2 else "calibration" if split_bucket < 6 else "frozen_test")
+            if audit
+            else "training"
+        )
+        await session.execute(
+            text("INSERT INTO review_items (tenant_id,incident_id,split) VALUES (:t,:i,:s)"),
+            {"t": tenant_id, "i": incident_id, "s": review_split},
+        )
 
     bundle: Bundle = app.bundles[is_synthetic]
     question: QuestionView | None = None
     async with app.db.tenant_tx(tenant_id) as session:
+        persisted_state = (
+            await session.execute(
+                text("SELECT state FROM incidents WHERE id=:i FOR UPDATE"), {"i": incident_id}
+            )
+        ).scalar_one()
+        if persisted_state == "ERASED":
+            return await load_view(app, session, tenant_id, incident_id)
         costs = await _stats(session, tenant_id, body.channel)
-        ev = evaluate(body.text, now, timezone, bundle, costs, holdout)
+        # Model inference is CPU-bound: keep it off the event loop (audit finding L5).
+        ev = await asyncio.to_thread(
+            evaluate, body.text, now, timezone, bundle, costs, holdout, f"{tenant_id}:{incident_id}"
+        )
         await _store_frame(session, tenant_id, incident_id, 1, ev.frame)
         await _store_decision(session, tenant_id, incident_id, "initial", ev.decision)
         await session.execute(
@@ -254,7 +314,10 @@ async def submit(app: Any, tenant_id: UUID, body: IncidentCreate) -> IncidentVie
 
 @router.post("/incidents", response_model=IncidentView, status_code=status.HTTP_201_CREATED)
 async def create_incident(body: IncidentCreate, request: Request, who: Writer) -> IncidentView:
-    return await submit(request.app.state, who.tenant_id, body)
+    view = await submit(request.app.state, who.tenant_id, body)
+    async with request.app.state.db.tenant_tx(who.tenant_id) as session:
+        await record_exposure(session, who.tenant_id, view.id, who.human_subject_id)
+    return view
 
 
 async def load_view(app: Any, session: AsyncSession, tenant_id: UUID, incident_id: UUID) -> IncidentView:
@@ -284,7 +347,8 @@ async def load_view(app: Any, session: AsyncSession, tenant_id: UUID, incident_i
     dec_row = (
         await session.execute(
             text(
-                "SELECT payload FROM decisions WHERE incident_id = :i ORDER BY created_at DESC, stage LIMIT 1"
+                "SELECT payload FROM decisions WHERE incident_id = :i "
+                "ORDER BY (stage = 'final') DESC, created_at DESC, id DESC LIMIT 1"
             ),
             {"i": incident_id},
         )
@@ -320,7 +384,11 @@ async def load_view(app: Any, session: AsyncSession, tenant_id: UUID, incident_i
 @router.get("/incidents/{incident_id}", response_model=IncidentView)
 async def get_incident(incident_id: UUID, request: Request, who: Reader) -> IncidentView:
     async with request.app.state.db.tenant_tx(who.tenant_id) as session:
-        return await load_view(request.app.state, session, who.tenant_id, incident_id)
+        await record_exposure(session, who.tenant_id, incident_id, who.human_subject_id)
+        view = await load_view(request.app.state, session, who.tenant_id, incident_id)
+    # Agent keys are third-party AI credentials: they get the decision, frame and evidence
+    # offsets, never the decrypted reporter text (data minimisation, audit finding M3).
+    return view.model_copy(update={"text": None}) if who.role == "agent" else view
 
 
 async def close_question(
@@ -417,7 +485,7 @@ async def recover_unevaluated(app: Any, tenant_id: UUID, incident_id: UUID) -> b
         raw = unseal(app.wrapper, tenant_id, incident_id, SealedText(row[6], row[5], row[4]))
         bundle: Bundle = app.bundles[row[3]]
         costs = await _stats(session, tenant_id, Channel(row[0]))
-        ev = evaluate(raw, row[1], row[2], bundle, costs, True)
+        ev = await asyncio.to_thread(evaluate, raw, row[1], row[2], bundle, costs, True)
         await _store_frame(session, tenant_id, incident_id, 1, ev.frame)
         await _store_decision(session, tenant_id, incident_id, "final", ev.decision)
         await session.execute(
@@ -432,7 +500,12 @@ async def recover_unevaluated(app: Any, tenant_id: UUID, incident_id: UUID) -> b
 async def answer_question(
     incident_id: UUID, body: AnswerSubmit, request: Request, who: Writer
 ) -> IncidentView:
-    return await close_question(request.app.state, who.tenant_id, who.role, incident_id, body.answer)
+    if who.role == "agent":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "agent answers require MCP evidence citations")
+    view = await close_question(request.app.state, who.tenant_id, who.role, incident_id, body.answer)
+    async with request.app.state.db.tenant_tx(who.tenant_id) as session:
+        await record_exposure(session, who.tenant_id, incident_id, who.human_subject_id)
+    return view
 
 
 @router.post("/privacy/erasure", response_model=ErasureResult)
@@ -450,8 +523,9 @@ async def erase_subject(body: ErasureRequest, request: Request, who: Admin) -> E
                 )
             ).all()
         ]
-        for incident_id in ids:
+        for incident_id in sorted(ids):
             params = {"i": incident_id}
+            await session.execute(text("SELECT id FROM incidents WHERE id=:i FOR UPDATE"), params)
             await session.execute(text("DELETE FROM incident_keys WHERE incident_id = :i"), params)
             await session.execute(
                 text(
@@ -461,8 +535,15 @@ async def erase_subject(body: ErasureRequest, request: Request, who: Admin) -> E
                 params,
             )
             await session.execute(text("DELETE FROM subject_index WHERE incident_id = :i"), params)
+            # The idempotency row stays (a replay must not re-ingest erased text) but its unsalted
+            # body hash goes: a sentinel makes any replay a 409 conflict.
+            await session.execute(
+                text("UPDATE mcp_calls SET request_digest = 'erased' WHERE incident_id = :i"), params
+            )
             await session.execute(text("DELETE FROM frames WHERE incident_id = :i"), params)
             await session.execute(text("DELETE FROM questions WHERE incident_id = :i"), params)
+            await session.execute(text("DELETE FROM review_labels WHERE incident_id = :i"), params)
+            await session.execute(text("DELETE FROM review_items WHERE incident_id = :i"), params)
             await session.execute(
                 text("UPDATE decisions SET payload = '{}'::jsonb WHERE incident_id = :i"), params
             )

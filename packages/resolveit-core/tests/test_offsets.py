@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unicodedata
 
+import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
@@ -38,6 +39,16 @@ ALPHABET = st.one_of(
         ]
     ),
 )
+
+
+def test_utf16_rejects_negative_or_reversed_code_point_offsets() -> None:
+    index = Utf16Index("a😀b")
+    assert index.span_to_utf16(1, 2) == (1, 3)
+    for start, end in [(-1, 1), (2, 1), (0, 4)]:
+        with pytest.raises(ValueError):
+            index.span_to_utf16(start, end)
+    with pytest.raises(ValueError):
+        index.to_utf16(-1)
 TEXT = st.text(alphabet=ALPHABET, max_size=60)
 PII = st.sampled_from(
     ["a.b@corp.in", "9876543210", "+91 98765 43210", "10.0.12.7", "ABCDE1234F", "EMP-48213", "2363 4567 8902"]

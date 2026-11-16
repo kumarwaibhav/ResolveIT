@@ -1,0 +1,13 @@
+.git
+.venv
+**/node_modules
+**/.next
+**/__pycache__
+.env*
+**/.env*
+docs/legacy_claude_handoff.txt
+bundles
+mlruns
+artifacts
+**/.pytest_cache
+**/.mypy_cache

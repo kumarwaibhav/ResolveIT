@@ -98,6 +98,8 @@ class DeferReason(StrEnum):
     SET_TOO_LARGE = "set_too_large"
     CRITICAL_CONTRADICTION = "critical_contradiction"
     UNMAPPED_QUEUE = "unmapped_queue"
+    BUNDLE_CHANGED = "bundle_changed"
+    SECURITY_ESCALATION = "security_escalation"
 
 
 class Frozen(BaseModel):

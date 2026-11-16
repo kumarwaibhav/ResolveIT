@@ -1,4 +1,47 @@
-# ResolveIT
+# ResolveIT AI
+
+Multilingual incident framing, conservative routing and human review. Active
+enterprise build: audited source and local synthetic execution; production release
+is gated on the evidence below. Never interpret synthetic scores as human accuracy.
+
+Current implementation includes forced-RLS PostgreSQL tenant transactions,
+reversible Alembic migrations, defensive dual-profile MCP, transactional delivery
+and billing primitives, persistent blind human review, tenant settings, CSV bounce
+analysis and six responsive enterprise workspaces. Browser credential sessions are
+encrypted, expire after one hour and revalidate API credentials upstream. Real
+tenants remain human-gated until supported shipped-model calibration exists.
+
+Start with [local runtime instructions](docs/LOCAL_RUNTIME.md). For resumable work,
+read [build checkpoint](docs/BUILD_STATE.md), [audited master plan](docs/00_CODEX_AUDIT_AND_MASTER_PLAN.md)
+and [contributor contract](AGENTS.md). Specialist reports live in `docs/audits/`.
+
+```powershell
+python scripts/local_env.py
+python scripts/gpu_guard.py -- docker compose build
+docker compose up -d
+```
+
+Ports publish to loopback only. Generated secrets remain in ignored `.env`.
+Compose syntax validation is separate from a successful fresh image build/boot;
+consult the checkpoint for actual execution status.
+
+Verified synthetic INT8 fixture demonstrates three-head training/export,
+opset17 quantization, parity checks and disjoint calibration splits. Full
+mDeBERTa LoRA entrypoint exists but pretrained training remains unverified.
+Human gold, independent frozen-test results, external Jira/A2A interoperability,
+managed backup erasure and production operational drills remain release gates.
+The Jira guards and observation-gated72h ledger are infrastructure primitives;
+they do not establish a configured external connector or completed billing service.
+
+Latest safety profile uses available memory rather than RAM/VRAM utilization caps:
+750MiB physical RAM emergency floor,512MiB free VRAM reserve, Windows commit/swap
+safety checks, GPU pause>=75C/stop>=78C. Exclusive heavy-job mutex enforced.
+Heavy jobs must use `scripts/gpu_guard.py`.
+
+## Historical baseline at b5b8612
+
+The original handoff inventory follows for provenance. Its feature and test statuses
+describe the baseline; current state and executed evidence are in `docs/BUILD_STATE.md`.
 
 Calibrated IT incident framing and routing. Built so far:
 

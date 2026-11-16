@@ -1,0 +1,104 @@
+name: resolveit
+x-app: &app
+  image: resolveit-api:stage-d
+  build:
+    context: .
+    dockerfile: infra/Dockerfile.api
+  environment: &app-env
+    RESOLVEIT_APP_DATABASE_URL: postgresql+asyncpg://resolveit_app:${RESOLVEIT_APP_PASSWORD:?Run scripts/local_env.py}@postgres:5432/resolveit
+    RESOLVEIT_MASTER_KEY_B64: ${RESOLVEIT_MASTER_KEY_B64:?Run scripts/local_env.py}
+  init: true
+  restart: unless-stopped
+  mem_limit: 384m
+  cpus: 1.0
+services:
+  postgres:
+    image: postgres:16
+    command: [postgres, -c, shared_buffers=64MB, -c, max_connections=80]
+    environment:
+      POSTGRES_DB: resolveit
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/local_env.py}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d resolveit"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    mem_limit: 384m
+    cpus: 1.0
+  setup:
+    <<: *app
+    restart: "no"
+    command: [python, scripts/bootstrap_db.py]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *app-env
+      RESOLVEIT_ADMIN_DSN: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/resolveit
+      RESOLVEIT_MIGRATOR_DATABASE_URL: postgresql+asyncpg://resolveit_migrator:${RESOLVEIT_MIGRATOR_PASSWORD}@postgres:5432/resolveit
+      RESOLVEIT_MIGRATOR_PASSWORD: ${RESOLVEIT_MIGRATOR_PASSWORD}
+      RESOLVEIT_APP_PASSWORD: ${RESOLVEIT_APP_PASSWORD}
+      RESOLVEIT_API_KEY: ${RESOLVEIT_API_KEY}
+      RESOLVEIT_AGENT_KEY: ${RESOLVEIT_AGENT_KEY}
+  api:
+    <<: *app
+    environment:
+      <<: *app-env
+      RESOLVEIT_APP_DATABASE_URL: postgresql+asyncpg://resolveit_app:${RESOLVEIT_APP_PASSWORD}@pgbouncer:5432/resolveit
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+      pgbouncer:
+        condition: service_started
+    ports:
+      - 127.0.0.1:8000:8000
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz',timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  worker:
+    <<: *app
+    mem_limit: 256m
+    command: [python, -m, resolveit_worker.runner]
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+  pgbouncer:
+    image: resolveit-pgbouncer:stage-d
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.pgbouncer
+    environment:
+      RESOLVEIT_APP_PASSWORD: ${RESOLVEIT_APP_PASSWORD}
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    mem_limit: 64m
+    cpus: 0.5
+  web:
+    image: resolveit-web:stage-d
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.web
+    environment:
+      RESOLVEIT_LOCAL_DEMO: "true"
+      RESOLVEIT_API_URL: http://api:8000
+      RESOLVEIT_API_KEY: ${RESOLVEIT_API_KEY}
+      RESOLVEIT_AGENT_KEY: ${RESOLVEIT_AGENT_KEY}
+      RESOLVEIT_SESSION_KEY_B64: ${RESOLVEIT_SESSION_KEY_B64:?Run scripts/local_env.py}
+    ports:
+      - 127.0.0.1:3000:3000
+    depends_on:
+      api:
+        condition: service_healthy
+    init: true
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 1.0
+volumes:
+  postgres-data:

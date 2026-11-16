@@ -1,0 +1,8 @@
+FROM postgres:16
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends pgbouncer && rm -rf /var/lib/apt/lists/*
+COPY infra/pgbouncer.ini /etc/resolveit/pgbouncer.ini
+COPY infra/pgbouncer-entrypoint.sh /usr/local/bin/resolveit-pgbouncer
+RUN sed -i 's/\r$//' /usr/local/bin/resolveit-pgbouncer && chmod 755 /usr/local/bin/resolveit-pgbouncer
+USER postgres
+ENTRYPOINT ["/usr/local/bin/resolveit-pgbouncer"]

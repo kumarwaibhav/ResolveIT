@@ -49,16 +49,20 @@ export function IntakeWorkspace() {
 
   const trimmed = text.trim();
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+    <div className="space-y-7">
+      <div className="workspace-heading"><div><p className="eyebrow">01 / INCIDENT INTAKE</p><h1>Clarity before the handoff.</h1><p className="workspace-description">One report. The right context. A more considered next step.</p></div><span className="pill-status">Human oversight enabled</span></div>
+      <div className="intake-overview"><div><span className="overview-number">11<span> / slots</span></span><p>A complete incident picture</p></div><div><span className="overview-number">3<span> / languages</span></span><p>Express the problem your way</p></div><div><span className="overview-number">1<span> / question, at most</span></span><p>Less friction. More signal.</p></div></div>
+    <div className="grid gap-8 xl:grid-cols-[minmax(0,5fr)_minmax(0,5fr)]">
       <form
-        className="space-y-5"
+        className="surface-panel space-y-5"
         onSubmit={(e) => {
           e.preventDefault();
           if (trimmed) void run(() => send("/api/incidents", { text, locale, channel: "web" }));
         }}
       >
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Report a problem</h1>
+          <p className="eyebrow">START WITH YOUR WORDS</p>
+          <h2 className="text-xl font-semibold tracking-tight">Report a problem</h2>
           <p className="mt-1 text-sm text-muted-foreground">Write it the way you would say it. English, Hindi or a mix.</p>
         </div>
         <div className="space-y-2">
@@ -74,7 +78,7 @@ export function IntakeWorkspace() {
             className="min-h-40 bg-card text-base"
           />
           <p id="problem-help" className="text-xs text-muted-foreground">
-            Paste any error code exactly as shown. Phone numbers and IDs are masked before storage.
+            Paste error codes exactly as shown. Detected identifiers are masked in derived text; your original report is encrypted.
           </p>
         </div>
         <fieldset>
@@ -121,9 +125,13 @@ export function IntakeWorkspace() {
             onAnswer={(answer) => void run(() => send(`/api/incidents/${view.id}/answer`, { answer }))}
           />
         ) : (
-          <Card>
+          <Card className="evidence-empty">
             <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p className="text-base font-medium text-foreground">What happens when you send</p>
+              <div className="intelligence-orbit" aria-hidden="true"><span>r↗</span><i /><i /><i /></div>
+              <p className="eyebrow">EVIDENCE, THEN ACTION</p>
+              <p className="text-xl font-medium text-foreground">A little context goes a long way.</p>
+              <p>Your incident frame and source evidence will appear here.</p>
+              <p className="pt-5 text-sm font-medium text-foreground">What happens when you send</p>
               <ol className="list-decimal space-y-1 pl-5">
                 <li>The ticket is saved first, so nothing is lost.</li>
                 <li>You see which details were understood, marked in your own words.</li>
@@ -133,6 +141,6 @@ export function IntakeWorkspace() {
           </Card>
         )}
       </section>
-    </div>
+    </div></div>
   );
 }

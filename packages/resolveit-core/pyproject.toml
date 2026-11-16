@@ -12,6 +12,8 @@ dependencies = ["numpy>=2.0", "pydantic>=2.7", "tzdata"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "hypothesis>=6.100", "ruff>=0.6", "mypy>=1.11"]
+ml-smoke = ["onnx>=1.17,<2", "onnxruntime>=1.20,<2", "psutil>=6,<8"]
+ml-train = ["torch>=2.5,<3", "transformers>=4.45,<6", "peft>=0.18,<1", "sentencepiece>=0.2,<1", "safetensors>=0.5,<1", "onnx>=1.17,<2", "onnxruntime>=1.20,<2", "psutil>=6,<8"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["resolveit_core"]

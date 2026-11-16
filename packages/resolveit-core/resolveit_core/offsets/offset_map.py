@@ -264,9 +264,13 @@ class Utf16Index:
         self._prefix = prefix
 
     def to_utf16(self, cp_offset: int) -> int:
+        if not 0 <= cp_offset < len(self._prefix):
+            raise ValueError("code point offset outside string")
         return self._prefix[cp_offset]
 
     def span_to_utf16(self, start: int, end: int) -> tuple[int, int]:
+        if not 0 <= start <= end < len(self._prefix):
+            raise ValueError("code point span outside string")
         return (self._prefix[start], self._prefix[end])
 
     def to_code_point(self, utf16_offset: int) -> int:

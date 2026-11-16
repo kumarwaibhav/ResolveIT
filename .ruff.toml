@@ -1,0 +1,4 @@
+extend = "packages/resolveit-core/pyproject.toml"
+
+[lint.per-file-ignores]
+"scripts/export_contracts.py" = ["E402"]

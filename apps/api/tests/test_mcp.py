@@ -9,7 +9,7 @@ import httpx
 from resolveit_api.auth import Principal
 from resolveit_api.routes.mcp import args_digest, sign_state
 
-from .conftest import TENANT_A, TENANT_DEMO, auth
+from .conftest import TENANT_A, TENANT_DEMO, auth, exploratory_incident
 
 V = "2026-07-28"
 VAGUE = "it stopped working this morning, please help"
@@ -44,12 +44,11 @@ async def post(client: httpx.AsyncClient, body: dict[str, Any], key: str = "demo
 
 async def ask(client: httpx.AsyncClient, tag: str) -> tuple[dict[str, Any], dict[str, Any]]:
     """Return (arguments, input_required result) for a ticket outside the no-ask holdout."""
-    for i in range(80):
-        args = {"text": f"{VAGUE} [{tag}-{i}]"}
+    args = {"text": f"{VAGUE} [{tag}]"}
+    with exploratory_incident(TENANT_DEMO):
         res = (await post(client, call(args))).json()["result"]
-        if res["resultType"] == "input_required":
-            return args, res
-    raise AssertionError("never asked")
+    assert res["resultType"] == "input_required"
+    return args, res
 
 
 async def test_discover_and_list(client: httpx.AsyncClient) -> None:
@@ -73,9 +72,9 @@ async def test_header_and_version_enforcement(client: httpx.AsyncClient) -> None
         "/mcp", json=body, headers=headers("demo_agent", "tools/call", "submit_incident", "2025-11-25")
     )
     assert r.status_code == 400 and r.json()["error"]["code"] == -32020  # header and _meta disagree
-    old = call({"text": "VPN down"}, meta={"io.modelcontextprotocol/protocolVersion": "2025-11-25"})
+    old = call({"text": "VPN down"}, meta={"io.modelcontextprotocol/protocolVersion": "2024-01-01"})
     r = await client.post(
-        "/mcp", json=old, headers=headers("demo_agent", "tools/call", "submit_incident", "2025-11-25")
+        "/mcp", json=old, headers=headers("demo_agent", "tools/call", "submit_incident", "2024-01-01")
     )
     assert r.json()["error"]["code"] == -32022
     r = await client.post("/mcp", json=body, headers=headers("demo_agent", "tools/list", "submit_incident"))
@@ -91,11 +90,13 @@ async def test_header_and_version_enforcement(client: httpx.AsyncClient) -> None
 async def test_clear_ticket_completes_in_one_round_trip_with_trace_echo(client: httpx.AsyncClient) -> None:
     tp = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
     res = (
-        await post(client, call({"text": "VPN is down again for the whole floor"}, meta={"traceparent": tp}))
+        await post(
+            client, call({"text": "database is down again for the whole floor"}, meta={"traceparent": tp})
+        )
     ).json()["result"]
     assert res["resultType"] == "complete" and res["isError"] is False
     sc = res["structuredContent"]
-    assert sc["incident"]["state"] == "ROUTED" and sc["incident"]["routed_team"] == "Network"
+    assert sc["incident"]["state"] == "ROUTED" and sc["incident"]["routed_team"] == "Database"
     assert 0 < sc["handoff_quality"] < 1 and "symptom" in sc["missing_slots"]
     assert res["_meta"]["traceparent"] == tp
     bad = (await post(client, call({"text": "wifi slow in office"}, meta={"traceparent": "garbage"}))).json()[
@@ -109,7 +110,9 @@ async def test_duplicate_call_creates_one_incident(
 ) -> None:
     args = {"text": "printer on floor 3 is jammed [dedupe]"}
     ids = {
-        (await post(client, call(args, rid=i))).json()["result"]["structuredContent"]["incident"]["id"]
+        (await post(client, call(args, rid=i, meta={"resolveit/idempotencyKey": "duplicate-test"}))).json()[
+            "result"
+        ]["structuredContent"]["incident"]["id"]
         for i in range(3)
     }
     assert len(ids) == 1
@@ -121,12 +124,12 @@ async def test_duplicate_call_creates_one_incident(
         )
 
 
-async def test_two_round_trips_with_cited_answer_routes(client: httpx.AsyncClient) -> None:
-    for i in range(80):
-        args = {"text": f"my vpn client says nothing, {VAGUE} [cited-{i}]".replace("vpn", "v-p-n")}
+async def test_two_round_trips_with_cited_answer_defers_without_answer_certificate(
+    client: httpx.AsyncClient,
+) -> None:
+    args = {"text": f"my vpn client says nothing, {VAGUE} [cited]".replace("vpn", "v-p-n")}
+    with exploratory_incident(TENANT_DEMO):
         res = (await post(client, call(args))).json()["result"]
-        if res["resultType"] == "input_required":
-            break
     req = res["inputRequests"]["clarify"]
     assert req["method"] == "elicitation/create" and req["params"]["mode"] == "form"
     assert "unknown" in req["params"]["requestedSchema"]["properties"]["answer"]["enum"]
@@ -141,12 +144,12 @@ async def test_two_round_trips_with_cited_answer_routes(client: httpx.AsyncClien
     )
     done = (await post(client, retry)).json()["result"]
     assert done["resultType"] == "complete"
-    assert done["structuredContent"]["incident"]["routed_team"] == "Network"
+    assert done["structuredContent"]["incident"]["routed_team"] is None
     replay = (await post(client, retry)).json()[
         "result"
     ]  # same retry again: stored outcome, no second answer
     assert replay["structuredContent"]["incident"]["id"] == done["structuredContent"]["incident"]["id"]
-    assert replay["structuredContent"]["incident"]["state"] == "ROUTED"
+    assert replay["structuredContent"]["incident"]["state"] == "DEFERRED"
 
 
 async def test_uncited_or_invented_answer_counts_as_unknown(client: httpx.AsyncClient) -> None:

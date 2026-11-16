@@ -1,4 +1,6 @@
 import "server-only";
+import { cookies } from "next/headers";
+import { openSession, SESSION_COOKIE } from "@/lib/auth-session";
 
 /** Server-side calls to the ResolveIT API. Keys stay on the server; the browser never sees them. */
 function env(name: string): string {
@@ -9,7 +11,18 @@ function env(name: string): string {
 
 export async function apiFetch(path: string, init: RequestInit & { agent?: boolean } = {}): Promise<Response> {
   const { agent, headers, ...rest } = init;
-  const key = env(agent ? "RESOLVEIT_AGENT_KEY" : "RESOLVEIT_API_KEY");
+  const sessionKey = await openSession((await cookies()).get(SESSION_COOKIE)?.value);
+  let key = sessionKey;
+  if (!key && process.env.RESOLVEIT_LOCAL_DEMO === "true") {
+    key = env(agent ? "RESOLVEIT_AGENT_KEY" : "RESOLVEIT_API_KEY");
+    const identity = await fetch(`${env("RESOLVEIT_API_URL")}/v1/me`, {
+      cache: "no-store", headers: { authorization: `Bearer ${key}` },
+    });
+    if (!identity.ok || (await identity.json()).is_synthetic !== true) {
+      return Response.json({ detail: "Local shared-key mode requires a verified synthetic tenant" }, { status: 403 });
+    }
+  }
+  if (!key) return Response.json({ detail: "Sign in required" }, { status: 401 });
   return fetch(`${env("RESOLVEIT_API_URL")}${path}`, {
     ...rest,
     cache: "no-store",

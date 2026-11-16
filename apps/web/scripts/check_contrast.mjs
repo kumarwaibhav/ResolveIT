@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 
 const css = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
-const [light, dark] = css.split("@media (prefers-color-scheme: dark) {\n    :root");
+const [light, dark] = css.split(/@media\s*\(prefers-color-scheme:\s*dark\)\s*\{\s*:root/);
 const tokens = (block) =>
   Object.fromEntries([...block.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6});/g)].map((m) => [m[1], m[2]]));
 const lum = (hex) => {

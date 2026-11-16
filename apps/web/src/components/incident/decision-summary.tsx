@@ -11,6 +11,8 @@ const DEFER_REASON: Record<string, string> = {
   set_too_large: "Too many teams remain plausible.",
   critical_contradiction: "Key details in the message conflict.",
   unmapped_queue: "The likely team has no mapped queue.",
+  security_escalation: "Possible security incident. No questions were asked; a person reviews it now, flagged for the security team.",
+  bundle_changed: "The model was updated while this question was open, so a person decides.",
 };
 
 function headline(view: IncidentView, d: Decision): { title: string; detail: string } {

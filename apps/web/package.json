@@ -2,6 +2,11 @@
   "name": "resolveit-web",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "next": {
+      "postcss": "8.5.23"
+    }
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

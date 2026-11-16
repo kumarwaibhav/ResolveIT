@@ -10,6 +10,61 @@
         "title": "Action",
         "type": "string"
       },
+      "AgreementResult": {
+        "additionalProperties": false,
+        "properties": {
+          "cohens_kappa": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cohens Kappa"
+          },
+          "krippendorff_alpha": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Krippendorff Alpha"
+          },
+          "n_pairs": {
+            "title": "N Pairs",
+            "type": "integer"
+          },
+          "observed_agreement": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed Agreement"
+          },
+          "scope": {
+            "default": "Paired independent human annotations in this tenant; nominal team labels only.",
+            "title": "Scope",
+            "type": "string"
+          }
+        },
+        "required": [
+          "n_pairs",
+          "observed_agreement",
+          "cohens_kappa",
+          "krippendorff_alpha"
+        ],
+        "title": "AgreementResult",
+        "type": "object"
+      },
       "AnswerSubmit": {
         "additionalProperties": false,
         "properties": {
@@ -28,6 +83,83 @@
           }
         },
         "title": "AnswerSubmit",
+        "type": "object"
+      },
+      "BounceAnalyzeRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "csv_text": {
+            "maxLength": 1000000,
+            "minLength": 1,
+            "title": "Csv Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "csv_text"
+        ],
+        "title": "BounceAnalyzeRequest",
+        "type": "object"
+      },
+      "BounceReport": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "title": "Assumptions",
+            "type": "string"
+          },
+          "bounce_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bounce Rate"
+          },
+          "bounced_tickets": {
+            "title": "Bounced Tickets",
+            "type": "integer"
+          },
+          "median_reassignments": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Reassignments"
+          },
+          "tickets": {
+            "title": "Tickets",
+            "type": "integer"
+          },
+          "top_transitions": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Top Transitions",
+            "type": "object"
+          },
+          "transitions": {
+            "title": "Transitions",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "tickets",
+          "transitions",
+          "bounced_tickets",
+          "bounce_rate",
+          "median_reassignments",
+          "top_transitions",
+          "assumptions"
+        ],
+        "title": "BounceReport",
         "type": "object"
       },
       "Channel": {
@@ -205,10 +337,26 @@
           "shadow_mode",
           "set_too_large",
           "critical_contradiction",
-          "unmapped_queue"
+          "unmapped_queue",
+          "bundle_changed",
+          "security_escalation"
         ],
         "title": "DeferReason",
         "type": "string"
+      },
+      "EnqueueResult": {
+        "additionalProperties": false,
+        "properties": {
+          "enqueued": {
+            "title": "Enqueued",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "enqueued"
+        ],
+        "title": "EnqueueResult",
+        "type": "object"
       },
       "EpistemicState": {
         "enum": [
@@ -264,6 +412,60 @@
         "title": "ErasureResult",
         "type": "object"
       },
+      "EvaluationStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "auto_route_enabled": {
+            "title": "Auto Route Enabled",
+            "type": "boolean"
+          },
+          "bundle_id": {
+            "title": "Bundle Id",
+            "type": "string"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "frozen_test_count": {
+            "title": "Frozen Test Count",
+            "type": "integer"
+          },
+          "human_gold_count": {
+            "title": "Human Gold Count",
+            "type": "integer"
+          },
+          "human_test_accuracy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Human Test Accuracy"
+          },
+          "provenance": {
+            "enum": [
+              "synthetic_seed",
+              "uncalibrated_rules"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bundle_id",
+          "provenance",
+          "auto_route_enabled",
+          "human_gold_count",
+          "frozen_test_count",
+          "explanation"
+        ],
+        "title": "EvaluationStatus",
+        "type": "object"
+      },
       "EvidenceView": {
         "additionalProperties": false,
         "properties": {
@@ -298,6 +500,79 @@
         "title": "EvidenceView",
         "type": "object"
       },
+      "GoldExport": {
+        "additionalProperties": false,
+        "properties": {
+          "next_after": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next After"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/GoldRecord"
+            },
+            "title": "Records",
+            "type": "array"
+          }
+        },
+        "required": [
+          "records"
+        ],
+        "title": "GoldExport",
+        "type": "object"
+      },
+      "GoldRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "incident_id": {
+            "format": "uuid",
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "label": {
+            "$ref": "#/components/schemas/HumanLabel"
+          },
+          "provenance": {
+            "enum": [
+              "human_gold",
+              "human_on_synthetic"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "split": {
+            "enum": [
+              "training",
+              "scaling",
+              "calibration",
+              "frozen_test"
+            ],
+            "title": "Split",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "incident_id",
+          "split",
+          "provenance",
+          "label",
+          "text"
+        ],
+        "title": "GoldRecord",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -309,6 +584,85 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HumanLabel": {
+        "additionalProperties": false,
+        "properties": {
+          "slots": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/HumanSlotLabel"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/Slot"
+            },
+            "title": "Slots",
+            "type": "object"
+          },
+          "team": {
+            "$ref": "#/components/schemas/Team"
+          }
+        },
+        "required": [
+          "team",
+          "slots"
+        ],
+        "title": "HumanLabel",
+        "type": "object"
+      },
+      "HumanSlotLabel": {
+        "additionalProperties": false,
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/EpistemicState"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "title": "HumanSlotLabel",
+        "type": "object"
+      },
+      "IdentityView": {
+        "additionalProperties": false,
+        "properties": {
+          "human_labeling_enrolled": {
+            "title": "Human Labeling Enrolled",
+            "type": "boolean"
+          },
+          "is_synthetic": {
+            "title": "Is Synthetic",
+            "type": "boolean"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "role",
+          "is_synthetic",
+          "human_labeling_enrolled"
+        ],
+        "title": "IdentityView",
         "type": "object"
       },
       "IncidentCreate": {
@@ -445,6 +799,38 @@
         "title": "IncidentView",
         "type": "object"
       },
+      "LabelResult": {
+        "additionalProperties": false,
+        "properties": {
+          "incident_id": {
+            "format": "uuid",
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "label_count": {
+            "title": "Label Count",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "unlabeled",
+              "single_label",
+              "needs_adjudication",
+              "gold",
+              "synthetic_labeled"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "incident_id",
+          "status",
+          "label_count"
+        ],
+        "title": "LabelResult",
+        "type": "object"
+      },
       "OptionView": {
         "additionalProperties": false,
         "properties": {
@@ -522,6 +908,136 @@
           "options"
         ],
         "title": "QuestionView",
+        "type": "object"
+      },
+      "ReviewItem": {
+        "additionalProperties": false,
+        "properties": {
+          "audit_selected": {
+            "title": "Audit Selected",
+            "type": "boolean"
+          },
+          "incident_id": {
+            "format": "uuid",
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "is_synthetic": {
+            "title": "Is Synthetic",
+            "type": "boolean"
+          },
+          "label_count": {
+            "title": "Label Count",
+            "type": "integer"
+          },
+          "locale": {
+            "title": "Locale",
+            "type": "string"
+          },
+          "model_exposed": {
+            "default": false,
+            "title": "Model Exposed",
+            "type": "boolean"
+          },
+          "own_label": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HumanLabel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "paired_labels": {
+            "items": {
+              "$ref": "#/components/schemas/HumanLabel"
+            },
+            "title": "Paired Labels",
+            "type": "array"
+          },
+          "peer_exposed": {
+            "default": false,
+            "title": "Peer Exposed",
+            "type": "boolean"
+          },
+          "split": {
+            "enum": [
+              "training",
+              "scaling",
+              "calibration",
+              "frozen_test"
+            ],
+            "title": "Split",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "unlabeled",
+              "single_label",
+              "needs_adjudication",
+              "gold",
+              "synthetic_labeled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggestion"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          }
+        },
+        "required": [
+          "incident_id",
+          "text",
+          "locale",
+          "is_synthetic",
+          "split",
+          "audit_selected",
+          "label_count",
+          "status"
+        ],
+        "title": "ReviewItem",
+        "type": "object"
+      },
+      "ReviewList": {
+        "additionalProperties": false,
+        "properties": {
+          "human_labeling_enrolled": {
+            "title": "Human Labeling Enrolled",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewItem"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "human_labeling_enrolled"
+        ],
+        "title": "ReviewList",
         "type": "object"
       },
       "Slot": {
@@ -630,6 +1146,56 @@
         ],
         "title": "Team",
         "type": "string"
+      },
+      "TenantSettings": {
+        "additionalProperties": false,
+        "properties": {
+          "defer_minutes": {
+            "default": 45,
+            "exclusiveMinimum": 0.0,
+            "maximum": 100000.0,
+            "title": "Defer Minutes",
+            "type": "number"
+          },
+          "misroute_minutes": {
+            "default": 240,
+            "exclusiveMinimum": 0.0,
+            "maximum": 100000.0,
+            "title": "Misroute Minutes",
+            "type": "number"
+          },
+          "queue_mapping": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/Team"
+            },
+            "title": "Queue Mapping",
+            "type": "object"
+          },
+          "routing_config_status": {
+            "const": "pending_connector_and_recalibration",
+            "default": "pending_connector_and_recalibration",
+            "title": "Routing Config Status",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "timezone"
+        ],
+        "title": "TenantSettings",
+        "type": "object"
       },
       "ValidationError": {
         "properties": {
@@ -791,6 +1357,108 @@
           }
         },
         "summary": "Mcp"
+      }
+    },
+    "/v1/bounce/analyze": {
+      "post": {
+        "operationId": "bounce_v1_bounce_analyze_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BounceAnalyzeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BounceReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Bounce"
+      }
+    },
+    "/v1/evaluation": {
+      "get": {
+        "operationId": "evaluation_v1_evaluation_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation"
       }
     },
     "/v1/incidents": {
@@ -971,6 +1639,52 @@
         "summary": "Answer Question"
       }
     },
+    "/v1/me": {
+      "get": {
+        "operationId": "identity_v1_me_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Identity"
+      }
+    },
     "/v1/privacy/erasure": {
       "post": {
         "description": "Crypto-shred every incident linked to one identifier. Irreversible.",
@@ -1026,6 +1740,507 @@
           }
         },
         "summary": "Erase Subject"
+      }
+    },
+    "/v1/review": {
+      "get": {
+        "operationId": "list_review_v1_review_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "blind",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Blind",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "After"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Review"
+      }
+    },
+    "/v1/review/agreement": {
+      "get": {
+        "operationId": "get_agreement_v1_review_agreement_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgreementResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Agreement"
+      }
+    },
+    "/v1/review/enqueue": {
+      "post": {
+        "description": "Enroll pre-migration tickets as training corrections, never calibration/test data.",
+        "operationId": "enqueue_legacy_v1_review_enqueue_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnqueueResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Enqueue Legacy"
+      }
+    },
+    "/v1/review/export": {
+      "get": {
+        "operationId": "export_gold_v1_review_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "split",
+            "required": false,
+            "schema": {
+              "default": "training",
+              "enum": [
+                "training",
+                "scaling",
+                "calibration",
+                "frozen_test"
+              ],
+              "title": "Split",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "After"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoldExport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Gold"
+      }
+    },
+    "/v1/review/{incident_id}/adjudication": {
+      "post": {
+        "operationId": "adjudicate_v1_review__incident_id__adjudication_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Incident Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HumanLabel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabelResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Adjudicate"
+      }
+    },
+    "/v1/review/{incident_id}/labels": {
+      "post": {
+        "operationId": "submit_label_v1_review__incident_id__labels_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Incident Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HumanLabel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabelResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Label"
+      }
+    },
+    "/v1/settings": {
+      "get": {
+        "operationId": "get_settings_v1_settings_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSettings"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Settings"
+      },
+      "put": {
+        "operationId": "put_settings_v1_settings_put",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TenantSettings"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSettings"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Settings"
       }
     }
   }

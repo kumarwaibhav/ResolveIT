@@ -45,6 +45,13 @@ def test_error_codes_and_ticket_ids_survive_masking() -> None:
     assert mask_pii(text).masked_text == text
 
 
+def test_error_like_email_local_part_cannot_bypass_masking() -> None:
+    assert mask_pii("Contact ABC-123@example.com about ABC-123").masked_text == "Contact <EMAIL> about ABC-123"
+    result = mask_pii("pan abcde1234f")
+    assert result.masked_text == "pan <PAN>"
+    assert result.entities[0].identifier == "ABCDE1234F"
+
+
 def test_structured_identifiers_masked() -> None:
     text = (
         "Regards, Rahul Sharma EMP-48213 rahul.sharma@corp.in +91 98765 43210 "

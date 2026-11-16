@@ -1,0 +1,18 @@
+FROM python:3.12-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2
+WORKDIR /app
+COPY packages/resolveit-core packages/resolveit-core
+COPY packages/resolveit-frames packages/resolveit-frames
+COPY apps/api apps/api
+COPY apps/worker apps/worker
+COPY enterprise enterprise
+COPY scripts scripts
+COPY infra/migrations infra/migrations
+COPY alembic.ini .
+COPY requirements-runtime.txt .
+RUN pip install --no-cache-dir -r requirements-runtime.txt ./packages/resolveit-core ./apps/api
+ENV PYTHONPATH=/app/apps/api:/app/apps/worker:/app/enterprise
+RUN useradd --create-home --uid 10001 resolveit
+USER resolveit
+EXPOSE 8000
+CMD ["python", "-m", "uvicorn", "resolveit_api.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

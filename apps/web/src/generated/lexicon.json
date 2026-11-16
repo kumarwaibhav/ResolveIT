@@ -82,7 +82,7 @@
     {
       "slot": "service",
       "value": "meeting_room",
-      "pattern": "\\b(?:projector|conference room|meeting room|av system|zoom room)\\b"
+      "pattern": "\\b(?:projector|conference room|meeting room|av system|zoom room)\\b|प्रोजेक्टर|मीटिंग रूम"
     },
     {
       "slot": "frequency",

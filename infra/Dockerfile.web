@@ -1,0 +1,15 @@
+FROM node:22-slim AS build
+WORKDIR /app
+COPY apps/web/package*.json ./
+RUN npm ci --no-audit --no-fund
+COPY apps/web/ ./
+ARG NODE_HEAP_MIB=1536
+ENV NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=${NODE_HEAP_MIB}
+RUN npm run build
+FROM node:22-slim
+WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
+COPY --from=build --chown=node:node /app ./
+USER node
+EXPOSE 3000
+CMD ["node", "node_modules/next/dist/bin/next", "start", "--hostname", "0.0.0.0"]

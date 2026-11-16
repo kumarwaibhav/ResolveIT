@@ -38,6 +38,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/bounce/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Bounce */
+        post: operations["bounce_v1_bounce_analyze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/evaluation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Evaluation */
+        get: operations["evaluation_v1_evaluation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/incidents": {
         parameters: {
             query?: never;
@@ -89,6 +123,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Identity */
+        get: operations["identity_v1_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/privacy/erasure": {
         parameters: {
             query?: never;
@@ -109,6 +160,129 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Review */
+        get: operations["list_review_v1_review_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/review/agreement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Agreement */
+        get: operations["get_agreement_v1_review_agreement_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/review/enqueue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enqueue Legacy
+         * @description Enroll pre-migration tickets as training corrections, never calibration/test data.
+         */
+        post: operations["enqueue_legacy_v1_review_enqueue_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/review/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Gold */
+        get: operations["export_gold_v1_review_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/review/{incident_id}/adjudication": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Adjudicate */
+        post: operations["adjudicate_v1_review__incident_id__adjudication_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/review/{incident_id}/labels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Label */
+        post: operations["submit_label_v1_review__incident_id__labels_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Settings */
+        get: operations["get_settings_v1_settings_get"];
+        /** Put Settings */
+        put: operations["put_settings_v1_settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -118,6 +292,22 @@ export interface components {
          * @enum {string}
          */
         Action: "ROUTE" | "ASK" | "DEFER";
+        /** AgreementResult */
+        AgreementResult: {
+            /** Cohens Kappa */
+            cohens_kappa: number | null;
+            /** Krippendorff Alpha */
+            krippendorff_alpha: number | null;
+            /** N Pairs */
+            n_pairs: number;
+            /** Observed Agreement */
+            observed_agreement: number | null;
+            /**
+             * Scope
+             * @default Paired independent human annotations in this tenant; nominal team labels only.
+             */
+            scope: string;
+        };
         /** AnswerSubmit */
         AnswerSubmit: {
             /**
@@ -125,6 +315,30 @@ export interface components {
              * @description null means the user pressed Skip.
              */
             answer?: string | null;
+        };
+        /** BounceAnalyzeRequest */
+        BounceAnalyzeRequest: {
+            /** Csv Text */
+            csv_text: string;
+        };
+        /** BounceReport */
+        BounceReport: {
+            /** Assumptions */
+            assumptions: string;
+            /** Bounce Rate */
+            bounce_rate: number | null;
+            /** Bounced Tickets */
+            bounced_tickets: number;
+            /** Median Reassignments */
+            median_reassignments: number | null;
+            /** Tickets */
+            tickets: number;
+            /** Top Transitions */
+            top_transitions: {
+                [key: string]: number;
+            };
+            /** Transitions */
+            transitions: number;
         };
         /**
          * Channel
@@ -190,7 +404,12 @@ export interface components {
          * DeferReason
          * @enum {string}
          */
-        DeferReason: "no_conforming_team" | "risk_above_defer_cost" | "shadow_mode" | "set_too_large" | "critical_contradiction" | "unmapped_queue";
+        DeferReason: "no_conforming_team" | "risk_above_defer_cost" | "shadow_mode" | "set_too_large" | "critical_contradiction" | "unmapped_queue" | "bundle_changed" | "security_escalation";
+        /** EnqueueResult */
+        EnqueueResult: {
+            /** Enqueued */
+            enqueued: number;
+        };
         /**
          * EpistemicState
          * @enum {string}
@@ -211,6 +430,26 @@ export interface components {
             /** Incidents Erased */
             incidents_erased: number;
         };
+        /** EvaluationStatus */
+        EvaluationStatus: {
+            /** Auto Route Enabled */
+            auto_route_enabled: boolean;
+            /** Bundle Id */
+            bundle_id: string;
+            /** Explanation */
+            explanation: string;
+            /** Frozen Test Count */
+            frozen_test_count: number;
+            /** Human Gold Count */
+            human_gold_count: number;
+            /** Human Test Accuracy */
+            human_test_accuracy?: number | null;
+            /**
+             * Provenance
+             * @enum {string}
+             */
+            provenance: "synthetic_seed" | "uncalibrated_rules";
+        };
         /** EvidenceView */
         EvidenceView: {
             /** End */
@@ -221,10 +460,66 @@ export interface components {
             /** Start */
             start: number;
         };
+        /** GoldExport */
+        GoldExport: {
+            /** Next After */
+            next_after?: string | null;
+            /** Records */
+            records: components["schemas"]["GoldRecord"][];
+        };
+        /** GoldRecord */
+        GoldRecord: {
+            /**
+             * Incident Id
+             * Format: uuid
+             */
+            incident_id: string;
+            label: components["schemas"]["HumanLabel"];
+            /**
+             * Provenance
+             * @enum {string}
+             */
+            provenance: "human_gold" | "human_on_synthetic";
+            /**
+             * Split
+             * @enum {string}
+             */
+            split: "training" | "scaling" | "calibration" | "frozen_test";
+            /** Text */
+            text: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HumanLabel */
+        HumanLabel: {
+            /** Slots */
+            slots: {
+                [key: string]: components["schemas"]["HumanSlotLabel"];
+            };
+            team: components["schemas"]["Team"];
+        };
+        /** HumanSlotLabel */
+        HumanSlotLabel: {
+            state: components["schemas"]["EpistemicState"];
+            /** Value */
+            value?: string | null;
+        };
+        /** IdentityView */
+        IdentityView: {
+            /** Human Labeling Enrolled */
+            human_labeling_enrolled: boolean;
+            /** Is Synthetic */
+            is_synthetic: boolean;
+            /** Role */
+            role: string;
+            /**
+             * Tenant Id
+             * Format: uuid
+             */
+            tenant_id: string;
         };
         /** IncidentCreate */
         IncidentCreate: {
@@ -279,6 +574,21 @@ export interface components {
              */
             text?: string | null;
         };
+        /** LabelResult */
+        LabelResult: {
+            /**
+             * Incident Id
+             * Format: uuid
+             */
+            incident_id: string;
+            /** Label Count */
+            label_count: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "unlabeled" | "single_label" | "needs_adjudication" | "gold" | "synthetic_labeled";
+        };
         /** OptionView */
         OptionView: {
             /** Label */
@@ -309,6 +619,56 @@ export interface components {
             template_id: string;
             /** Text */
             text: string;
+        };
+        /** ReviewItem */
+        ReviewItem: {
+            /** Audit Selected */
+            audit_selected: boolean;
+            /**
+             * Incident Id
+             * Format: uuid
+             */
+            incident_id: string;
+            /** Is Synthetic */
+            is_synthetic: boolean;
+            /** Label Count */
+            label_count: number;
+            /** Locale */
+            locale: string;
+            /**
+             * Model Exposed
+             * @default false
+             */
+            model_exposed: boolean;
+            own_label?: components["schemas"]["HumanLabel"] | null;
+            /** Paired Labels */
+            paired_labels?: components["schemas"]["HumanLabel"][];
+            /**
+             * Peer Exposed
+             * @default false
+             */
+            peer_exposed: boolean;
+            /**
+             * Split
+             * @enum {string}
+             */
+            split: "training" | "scaling" | "calibration" | "frozen_test";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "unlabeled" | "single_label" | "needs_adjudication" | "gold" | "synthetic_labeled";
+            /** Suggestion */
+            suggestion?: string | null;
+            /** Text */
+            text: string | null;
+        };
+        /** ReviewList */
+        ReviewList: {
+            /** Human Labeling Enrolled */
+            human_labeling_enrolled: boolean;
+            /** Items */
+            items: components["schemas"]["ReviewItem"][];
         };
         /**
          * Slot
@@ -348,6 +708,33 @@ export interface components {
          * @enum {string}
          */
         Team: "Network" | "Identity_Access" | "Email_Collab" | "Hardware_Endpoint" | "Software_Licensing" | "Database" | "Cloud_Infra" | "Security" | "ERP_Finance" | "HR_Systems" | "DevOps_CICD" | "Facilities_AV";
+        /** TenantSettings */
+        TenantSettings: {
+            /**
+             * Defer Minutes
+             * @default 45
+             */
+            defer_minutes: number;
+            /**
+             * Misroute Minutes
+             * @default 240
+             */
+            misroute_minutes: number;
+            /** Queue Mapping */
+            queue_mapping?: {
+                [key: string]: string;
+            };
+            /**
+             * Routing Config Status
+             * @default pending_connector_and_recalibration
+             * @constant
+             */
+            routing_config_status: "pending_connector_and_recalibration";
+            /** Timezone */
+            timezone: string;
+            /** Version */
+            version: number;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -413,6 +800,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bounce_v1_bounce_analyze_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BounceAnalyzeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BounceReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_v1_evaluation_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvaluationStatus"];
                 };
             };
             /** @description Validation Error */
@@ -531,6 +984,37 @@ export interface operations {
             };
         };
     };
+    identity_v1_me_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentityView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     erase_subject_v1_privacy_erasure_post: {
         parameters: {
             query?: never;
@@ -553,6 +1037,278 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErasureResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_review_v1_review_get: {
+        parameters: {
+            query?: {
+                blind?: boolean;
+                limit?: number;
+                after?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_agreement_v1_review_agreement_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgreementResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enqueue_legacy_v1_review_enqueue_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnqueueResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_gold_v1_review_export_get: {
+        parameters: {
+            query?: {
+                split?: "training" | "scaling" | "calibration" | "frozen_test";
+                limit?: number;
+                after?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoldExport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    adjudicate_v1_review__incident_id__adjudication_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HumanLabel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabelResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_label_v1_review__incident_id__labels_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HumanLabel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabelResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_settings_v1_settings_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_settings_v1_settings_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TenantSettings"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantSettings"];
                 };
             };
             /** @description Validation Error */

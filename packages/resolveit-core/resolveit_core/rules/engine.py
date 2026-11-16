@@ -61,7 +61,7 @@ _SERVICES: tuple[tuple[str, str], ...] = (
     ("cloud", r"\b(?:aws|azure|gcp|ec2|s3 bucket|kubernetes|k8s)\b"),
     ("cicd", r"\b(?:jenkins|github actions|gitlab ci|pipeline|build agent|argo ?cd)\b"),
     ("licence", r"\b(?:licen[cs]e|subscription|activation key)\b|लाइसेंस"),
-    ("meeting_room", r"\b(?:projector|conference room|meeting room|av system|zoom room)\b"),
+    ("meeting_room", r"\b(?:projector|conference room|meeting room|av system|zoom room)\b|प्रोजेक्टर|मीटिंग रूम"),
 )
 
 _FREQUENCY: tuple[tuple[str, str], ...] = (

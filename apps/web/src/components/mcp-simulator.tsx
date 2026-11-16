@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { WorkspaceHeading } from "@/components/workspace-heading";
 
 interface Exchange {
   request: { headers: Record<string, string>; body: unknown };
   status: number;
   response: {
     result?: {
-      resultType: "complete" | "input_required";
+      resultType?: "complete" | "input_required";
       requestState?: string;
       inputRequests?: Record<string, { params: { message: string; requestedSchema: { properties: { answer: { enum: string[] } } } } }>;
       content?: { text: string }[];
@@ -51,6 +52,7 @@ export function McpSimulator() {
   const [quote, setQuote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [standard, setStandard] = useState<Exchange | null>(null);
 
   const last = trips.at(-1)?.response.result;
   const pending = last?.resultType === "input_required" ? last : null;
@@ -80,22 +82,18 @@ export function McpSimulator() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Agent hand-off</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Act as an upstream AI agent handing a user&apos;s report to ResolveIT over MCP (protocol 2026-07-28). Each
-          call is independent: no session, and any server can answer the retry.
-        </p>
-      </div>
+      <WorkspaceHeading eyebrow="05 / AGENT HANDOFF" title="Trust the trace." description="Inspect the exchange, the evidence and the decision. Standard MCP transport and the ResolveIT enterprise profile stay explicit." />
+      <section className="surface-panel"><h2 className="panel-title">Standard MCP · 2025-11-25</h2><p className="panel-copy">Inspect initialization and tool discovery without enterprise MRTR metadata. The stateless adapter does not issue a session ID.</p><div className="action-row"><button className="workspace-button" disabled={busy} onClick={async () => { setBusy(true); setError(null); try { setStandard(await exchange({ jsonrpc: "2.0", id: "init", method: "initialize", params: { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "resolveit-inspector", version: "0.1.0" } } })); } catch (err) { setError(err instanceof Error ? err.message : "Initialization failed."); } finally { setBusy(false); } }}>Inspect initialize</button><button className="workspace-button" disabled={busy} onClick={async () => { setBusy(true); setError(null); try { setStandard(await exchange({ jsonrpc: "2.0", id: "tools", method: "tools/list", params: {} })); } catch (err) { setError(err instanceof Error ? err.message : "Discovery failed."); } finally { setBusy(false); } }}>Inspect tools/list</button></div>{standard && <div className="mt-5 grid gap-4 md:grid-cols-2"><Json label="Standard request" value={standard.request} /><Json label={`Standard response (HTTP ${standard.status})`} value={standard.response} /></div>}</section>
+      <div><p className="eyebrow">RESOLVEIT ENTERPRISE PROFILE · 2026-07-28</p><h2 className="panel-title">Signed clarification round trips</h2><p className="panel-copy">This opt-in enterprise profile uses signed request state and source citations. It is distinct from the standard MCP client lifecycle.</p></div>
       <form
-        className="space-y-3"
+        className="surface-panel space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
           if (text.trim()) void call({}, true);
         }}
       >
         <Label htmlFor="agent-text">The user&apos;s report, verbatim</Label>
-        <Textarea id="agent-text" value={text} rows={3} onChange={(e) => setText(e.target.value)} className="bg-card" />
+        <Textarea id="agent-text" value={text} maxLength={20_000} rows={3} onChange={(e) => setText(e.target.value)} className="bg-card" />
         <Button type="submit" disabled={busy || !text.trim()} className="min-h-11 sm:min-h-9">
           Call submit_incident
         </Button>

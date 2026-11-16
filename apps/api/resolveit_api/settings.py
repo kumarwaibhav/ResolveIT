@@ -15,6 +15,7 @@ class Settings:
     async_clarify_minutes: int = 240
     audit_rate: float = 0.05
     holdout_rate: float = 0.10
+    allowed_origins: tuple[str, ...] = ("http://localhost:3000", "http://127.0.0.1:3000")
 
 
 def load_settings() -> Settings:
@@ -25,4 +26,11 @@ def load_settings() -> Settings:
         raise RuntimeError(f"missing required environment variable {exc.args[0]}") from exc
     if len(key) != 32:
         raise RuntimeError("RESOLVEIT_MASTER_KEY_B64 must decode to 32 bytes")
-    return Settings(app_database_url=url, master_key=key)
+    origins = tuple(
+        x.strip()
+        for x in os.environ.get(
+            "RESOLVEIT_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
+        ).split(",")
+        if x.strip()
+    )
+    return Settings(app_database_url=url, master_key=key, allowed_origins=origins)

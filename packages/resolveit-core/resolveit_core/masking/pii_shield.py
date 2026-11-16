@@ -82,7 +82,7 @@ _PROTECTED = (
 
 _EMAIL = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
 _AADHAAR = re.compile(r"(?<![\dA-Za-z])[2-9]\d{3}[ \-]?\d{4}[ \-]?\d{4}(?![\dA-Za-z])")
-_PAN = re.compile(r"(?<![A-Za-z0-9])[A-Z]{5}\d{4}[A-Z](?![A-Za-z0-9])")
+_PAN = re.compile(r"(?<![A-Za-z0-9])[A-Z]{5}\d{4}[A-Z](?![A-Za-z0-9])", re.IGNORECASE)
 _IPV4 = re.compile(r"(?<![\d.])(?:\d{1,3}\.){3}\d{1,3}(?![\d.])")
 _PHONE = re.compile(r"(?<![\dA-Za-z])(?:\+?91[ \-]?|0)?[6-9]\d{4}[ \-]?\d{5}(?![\dA-Za-z])")
 _DEFAULT_EMP = re.compile(r"(?<![A-Za-z0-9])(?:EMP|emp|Emp)[\-_ ]?\d{4,8}(?![A-Za-z0-9])")
@@ -147,7 +147,7 @@ def _candidates(text: str, cfg: MaskerConfig) -> Iterable[PiiEntity]:
         if verhoeff_valid(d):
             yield PiiEntity(PiiType.AADHAAR, m.start(), m.end(), d)
     for m in _PAN.finditer(text):
-        yield PiiEntity(PiiType.PAN, m.start(), m.end(), m.group())
+        yield PiiEntity(PiiType.PAN, m.start(), m.end(), canonical_identifier(PiiType.PAN, m.group()))
     for m in _IPV4.finditer(text):
         if _valid_ipv4(m.group()):
             yield PiiEntity(PiiType.IP_ADDR, m.start(), m.end(), m.group())
@@ -187,7 +187,10 @@ def mask_pii(normalised_text: str, cfg: MaskerConfig | None = None) -> MaskResul
     for ent in _candidates(normalised_text, cfg):
         if ent.start == ent.end:
             continue
-        if _overlaps(ent.start, ent.end, protected) or _overlaps(ent.start, ent.end, taken):
+        # An error-like substring in an email local part cannot exempt the
+        # entire email address from redaction (e.g. ABC-123@example.com).
+        protected_overlap = ent.kind is not PiiType.EMAIL and _overlaps(ent.start, ent.end, protected)
+        if protected_overlap or _overlaps(ent.start, ent.end, taken):
             continue
         taken.append((ent.start, ent.end))
         kept.append(ent)

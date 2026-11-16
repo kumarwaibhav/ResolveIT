@@ -2,7 +2,8 @@
 
 Raw text is encrypted with a fresh AES-256-GCM data key per incident. The
 data key is stored only in wrapped form. Deleting the wrapped key makes the
-ciphertext, and every backup of it, unreadable.
+live ciphertext unreadable. Backups that retain wrapped keys remain decryptable;
+production erasure also requires backup expiry or independent KMS key destruction.
 
 KeyWrapper is the KMS boundary. LocalKeyWrapper keeps the master key in
 process memory and is for development and tests only; production must supply
@@ -75,8 +76,17 @@ def unseal(wrapper: KeyWrapper, tenant_id: UUID, incident_id: UUID, sealed: Seal
 def blind_index(wrapper: KeyWrapper, tenant_id: UUID, kind: str, canonical_identifier: str) -> bytes:
     """Keyed HMAC of (kind, identifier): finds a person's records without storing who they are."""
     return hmac.new(
-        wrapper.index_key(tenant_id), f"{kind}:{canonical_identifier}".encode(), hashlib.sha256
+        wrapper.index_key(tenant_id),
+        f"{kind}:{canonical_identifier}".encode(),
+        hashlib.sha256,
     ).digest()
 
 
-__all__ = ["KeyWrapper", "LocalKeyWrapper", "SealedText", "blind_index", "seal", "unseal"]
+__all__ = [
+    "KeyWrapper",
+    "LocalKeyWrapper",
+    "SealedText",
+    "blind_index",
+    "seal",
+    "unseal",
+]

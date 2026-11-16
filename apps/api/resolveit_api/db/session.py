@@ -40,15 +40,15 @@ class Database:
             )
             yield session
 
-    async def resolve_api_key(self, key_hash: str) -> tuple[UUID, str] | None:
+    async def resolve_api_key(self, key_hash: str) -> tuple[UUID, str, UUID | None] | None:
         """Pre-tenant lookup through the SECURITY DEFINER function; reads nothing else."""
         async with self._sessions() as session, session.begin():
             row = (
                 await session.execute(
-                    text("SELECT tenant_id, role FROM resolve_api_key(:h)"), {"h": key_hash}
+                    text("SELECT tenant_id, role, human_subject_id FROM resolve_api_key(:h)"), {"h": key_hash}
                 )
             ).first()
-        return (row[0], row[1]) if row else None
+        return (row[0], row[1], row[2]) if row else None
 
     async def due_clarifications(self, limit: int = 100) -> list[tuple[UUID, UUID]]:
         """(tenant_id, incident_id) pairs past their clarification deadline. IDs only, all tenants."""
@@ -57,6 +57,13 @@ class Database:
                 await session.execute(
                     text("SELECT tenant_id, incident_id FROM due_clarifications(:n)"), {"n": limit}
                 )
+            ).all()
+        return [(r[0], r[1]) for r in rows]
+
+    async def due_outbox(self, limit: int = 100) -> list[tuple[UUID, UUID]]:
+        async with self._sessions() as session, session.begin():
+            rows = (
+                await session.execute(text("SELECT tenant_id, event_id FROM due_outbox(:n)"), {"n": limit})
             ).all()
         return [(r[0], r[1]) for r in rows]
 

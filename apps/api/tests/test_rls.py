@@ -7,6 +7,7 @@ import asyncpg
 import httpx
 import pytest
 from sqlalchemy import text
+from sqlalchemy.exc import DBAPIError
 
 from .conftest import TENANT_A, TENANT_B, auth
 
@@ -23,6 +24,14 @@ TABLES = [
     "channel_stats",
     "erasure_requests",
     "mcp_calls",
+    "inbox",
+    "outbox",
+    "billing_ledger",
+    "tenant_settings",
+    "review_items",
+    "review_labels",
+    "review_exposures",
+    "connector_observation",
 ]
 
 
@@ -96,23 +105,93 @@ async def test_200_concurrent_mixed_tenant_transactions_never_cross(client: http
     await _create(client, "a_admin", "printer jam")
     await _create(client, "b_admin", "wifi slow")
     db = client.app.state.db  # type: ignore[attr-defined]
+    for tenant in (TENANT_A, TENANT_B):
+        async with db.tenant_tx(tenant) as session:
+            await session.execute(
+                text(
+                    "INSERT INTO channel_stats (tenant_id,channel,asks,answers) VALUES (:t,'rls_control',7,3)"
+                ),
+                {"t": tenant},
+            )
+    visible_tenants = " UNION ALL ".join(
+        f"SELECT {'id' if table == 'tenants' else 'tenant_id'} AS tenant_id FROM {table}" for table in TABLES
+    )
 
-    async def read(tenant: UUID) -> set[UUID]:
+    async def probe(tenant: UUID, index: int) -> set[UUID]:
         async with db.tenant_tx(tenant) as session:
             await asyncio.sleep(0)
-            rows = (await session.execute(text("SELECT tenant_id FROM incidents"))).all()
+            await session.execute(
+                text("INSERT INTO channel_stats (tenant_id,channel,asks,answers) VALUES (:t,:c,1,0)"),
+                {"t": tenant, "c": f"rls_probe_{index}"},
+            )
+            other = TENANT_B if tenant == TENANT_A else TENANT_A
+            with pytest.raises(DBAPIError) as denied:
+                async with session.begin_nested():
+                    await session.execute(
+                        text("INSERT INTO channel_stats (tenant_id,channel,asks,answers) VALUES (:t,:c,1,0)"),
+                        {"t": other, "c": f"rls_forbidden_{index}"},
+                    )
+            assert getattr(denied.value.orig, "sqlstate", None) == "42501"
+            forbidden_update = await session.execute(
+                text(
+                    "UPDATE channel_stats SET asks=999 WHERE tenant_id=:t AND channel='rls_control' RETURNING tenant_id"
+                ),
+                {"t": other},
+            )
+            assert forbidden_update.first() is None
+            await session.execute(
+                text("UPDATE channel_stats SET answers=1 WHERE channel=:c"), {"c": f"rls_probe_{index}"}
+            )
+            own = (
+                await session.execute(
+                    text("SELECT asks,answers FROM channel_stats WHERE channel=:c"),
+                    {"c": f"rls_probe_{index}"},
+                )
+            ).one()
+            assert tuple(own) == (1, 1)
+            rows = (await session.execute(text(visible_tenants))).all()
             return {r[0] for r in rows}
 
     tenants = [TENANT_A if i % 2 else TENANT_B for i in range(200)]
     sem = asyncio.Semaphore(20)
 
-    async def guarded(t: UUID) -> set[UUID]:
-        async with sem:
-            return await read(t)
+    active = peak = 0
 
-    results = await asyncio.gather(*(guarded(t) for t in tenants))
+    async def guarded(t: UUID, index: int) -> set[UUID]:
+        nonlocal active, peak
+        async with sem:
+            active += 1
+            peak = max(peak, active)
+            try:
+                return await probe(t, index)
+            finally:
+                active -= 1
+
+    results = await asyncio.gather(*(guarded(t, index) for index, t in enumerate(tenants)))
+    assert peak <= 20
     for tenant, seen in zip(tenants, results, strict=True):
         assert seen == {tenant}
+    for tenant in (TENANT_A, TENANT_B):
+        async with db.tenant_tx(tenant) as session:
+            assert (
+                await session.execute(
+                    text(
+                        "SELECT count(*) FROM channel_stats WHERE channel LIKE 'rls_probe_%' AND asks=1 AND answers=1"
+                    )
+                )
+            ).scalar_one() == 100
+            assert (
+                await session.execute(
+                    text("SELECT count(*) FROM channel_stats WHERE channel LIKE 'rls_forbidden_%'")
+                )
+            ).scalar_one() == 0
+            assert tuple(
+                (
+                    await session.execute(
+                        text("SELECT asks,answers FROM channel_stats WHERE channel='rls_control'")
+                    )
+                ).one()
+            ) == (7, 3)
 
 
 async def test_auth_failures(client: httpx.AsyncClient) -> None:

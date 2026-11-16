@@ -7,7 +7,7 @@ from resolveit_worker.runner import LEADER_LOCK_ID, sweep
 
 import resolveit_api.routes.intake as intake
 
-from .conftest import TENANT_DEMO, auth
+from .conftest import TENANT_DEMO, auth, exploratory_incident
 
 VAGUE = "it stopped working this morning, please help"
 
@@ -30,10 +30,9 @@ async def test_unanswered_question_times_out_to_defer_without_counting_as_an_ans
     client: httpx.AsyncClient, app_conn: asyncpg.Connection
 ) -> None:
     out: dict = {}
-    for _ in range(60):
+    with exploratory_incident(TENANT_DEMO):
         out = (await client.post("/v1/incidents", json={"text": VAGUE}, headers=auth("demo_admin"))).json()
-        if out["question"]:
-            break
+    assert out["question"] is not None
     before = await _fetch(app_conn, "SELECT answers FROM channel_stats WHERE channel = 'web'")
     assert (await sweep(client.app.state)).timed_out == 0  # type: ignore[attr-defined]  # deadline not reached
     await _expire(app_conn, out["id"])
@@ -58,7 +57,7 @@ async def test_incident_survives_a_crash_between_persist_and_evaluate_and_is_rec
     monkeypatch.setattr(intake, "evaluate", boom)
     with pytest.raises(RuntimeError):
         await client.post(
-            "/v1/incidents", json={"text": "VPN is down [crash-test]"}, headers=auth("demo_admin")
+            "/v1/incidents", json={"text": "database is down [crash-test]"}, headers=auth("demo_admin")
         )
     monkeypatch.setattr(intake, "evaluate", real)
     row = await _fetch(
@@ -71,7 +70,7 @@ async def test_incident_survives_a_crash_between_persist_and_evaluate_and_is_rec
     result = await sweep(client.app.state)  # type: ignore[attr-defined]
     assert result.recovered == 1 and result.failed == 0
     view = (await client.get(f"/v1/incidents/{row['id']}", headers=auth("demo_admin"))).json()
-    assert view["state"] == "ROUTED" and view["routed_team"] == "Network"
+    assert view["state"] == "ROUTED" and view["routed_team"] == "Database"
 
 
 async def test_only_one_worker_holds_the_leader_lock(client: httpx.AsyncClient) -> None:

@@ -14,6 +14,8 @@ from fastapi import Depends, Header, HTTPException, Request, status
 class Principal:
     tenant_id: UUID
     role: str
+    key_fingerprint: str = ""
+    human_subject_id: UUID | None = None
 
 
 def hash_api_key(key: str) -> str:
@@ -23,10 +25,13 @@ def hash_api_key(key: str) -> str:
 async def principal(request: Request, authorization: Annotated[str | None, Header()] = None) -> Principal:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "missing bearer token")
-    found = await request.app.state.db.resolve_api_key(hash_api_key(authorization[7:].strip()))
+    fingerprint = hash_api_key(authorization[7:].strip())
+    found = await request.app.state.db.resolve_api_key(fingerprint)
     if found is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid API key")
-    return Principal(tenant_id=found[0], role=found[1])
+    return Principal(
+        tenant_id=found[0], role=found[1], key_fingerprint=fingerprint, human_subject_id=found[2]
+    )
 
 
 def require_role(*roles: str):  # type: ignore[no-untyped-def]

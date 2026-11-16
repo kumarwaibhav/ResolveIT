@@ -15,10 +15,9 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from sqlalchemy import text
-
 from resolveit_api.main import create_app
 from resolveit_api.routes.intake import close_question, recover_unevaluated
+from sqlalchemy import text
 
 LEADER_LOCK_ID = 7_301_001
 log = logging.getLogger("resolveit.worker")
@@ -52,9 +51,9 @@ async def sweep(app: Any, limit: int = 100) -> SweepResult:
                 timed_out += 1
             elif await recover_unevaluated(app, tenant_id, incident_id):
                 recovered += 1
-        except Exception:
+        except Exception as exc:
             failed += 1
-            log.exception("sweep failed for incident %s", incident_id)  # IDs only, never ticket text
+            log.error("sweep failed for incident %s: %s", incident_id, type(exc).__name__)
     return SweepResult(timed_out, recovered, failed)
 
 

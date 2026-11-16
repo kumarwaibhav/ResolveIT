@@ -13,6 +13,7 @@ is_synthetic and must never appear in evaluation.
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import numpy as np
@@ -20,7 +21,7 @@ from resolveit_core.calibrate.conformal_selective import (
     ConformalCalibrator,
     fit_conformal,
     fit_temperature,
-    select_tau,
+    select_queue_taus,
     softmax,
 )
 from resolveit_core.explain.ablation import FrameEncoder, LinearTeamHead
@@ -66,6 +67,10 @@ class Bundle:
     tau_hat: float | None
     theta: ThetaTable
     costs: CostMatrix
+    queue_tau_hat: dict[int, float | None] | None = None
+    answer_queue_tau_hat: dict[int, float | None] | None = None
+    # Trained bundles only: masked text -> pooled vector from the verified INT8 encoder.
+    encoder: Callable[[str], np.ndarray] | None = None
 
 
 def _head() -> LinearTeamHead:
@@ -142,23 +147,50 @@ def synthetic_demo_bundle(seed: int = 20261112) -> Bundle:
     cf, cp, cy = _generate(rng, 200)
     probs = softmax(logits(cf, cp), temperature)
     conformal = fit_conformal(probs, cy, alpha=0.10, min_class_n=150, seed=seed)
-    routed_to = np.argmin(probs @ DEFAULT_COSTS.delay, axis=1)
-    tau = select_tau(probs.max(axis=1), routed_to != cy, epsilon=0.05, delta=0.05)
+    # Risk certification has its own independent generated draw after T and
+    # conformal are frozen. Only the actual fixed gate-eligible population is
+    # tested; queue certificates share one family-wise error budget.
+    rf, rp, ry = _generate(rng, 1200)
+    risk_probs = softmax(logits(rf, rp), temperature)
+    routed_to = np.argmin(risk_probs @ DEFAULT_COSTS.delay, axis=1)
+    membership = conformal.predict_sets(risk_probs)
+    chosen_delay = (risk_probs @ DEFAULT_COSTS.delay)[np.arange(len(ry)), routed_to]
+    eligible = (
+        membership[np.arange(len(ry)), routed_to]
+        & (membership.sum(axis=1) <= 3)
+        & (chosen_delay <= DEFAULT_COSTS.c_def)
+    )
+    certificates = select_queue_taus(
+        risk_probs.max(axis=1)[eligible],
+        (routed_to != ry)[eligible],
+        routed_to[eligible],
+        n_queues=N_TEAMS,
+        epsilon=0.05,
+        delta=0.05,
+    )
+    queue_taus = {q: result.tau_hat for q, result in certificates.items()}
     theta = ThetaTable(VOCAB)
     tf, _, ty = _generate(rng, 200)
     for values, y in zip(tf, ty, strict=True):
         for slot in (Slot.SERVICE, Slot.SCOPE):
             theta.add(slot, values.get(slot, UNKNOWN_ANSWER), int(y))
-    digest = _digest(head.weights, np.array([temperature]), conformal.thresholds, theta.counts[Slot.SERVICE])
+    digest = _digest(
+        head.weights,
+        np.array([temperature]),
+        conformal.thresholds,
+        theta.counts[Slot.SERVICE],
+        np.array([-1.0 if queue_taus[q] is None else queue_taus[q] for q in range(N_TEAMS)]),
+    )
     return Bundle(
         bundle_id=f"synthetic-demo-{digest}",
         synthetic=True,
         head=head,
         temperature=temperature,
         conformal=conformal,
-        tau_hat=tau.tau_hat,
+        tau_hat=None,  # no global certificate; each predicted queue must qualify itself
         theta=theta,
         costs=DEFAULT_COSTS,
+        queue_tau_hat=queue_taus,
     )
 
 

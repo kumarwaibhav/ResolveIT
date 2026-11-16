@@ -10,6 +10,7 @@ which is unit-tested to 1e-9.
 
 from __future__ import annotations
 
+import hashlib
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -36,9 +37,9 @@ class CostMatrix:
         d = self.delay
         if d.ndim != 2 or d.shape[0] != d.shape[1]:
             raise ValueError("cost matrix must be square")
-        if np.any(d < 0) or np.any(np.diag(d) != 0):
+        if not np.isfinite(d).all() or np.any(d < 0) or np.any(np.diag(d) != 0):
             raise ValueError("costs must be non-negative with a zero diagonal")
-        if self.c_def <= 0:
+        if not math.isfinite(self.c_def) or self.c_def <= 0:
             raise ValueError("c_def must be positive")
 
     @classmethod
@@ -59,13 +60,36 @@ class ChannelCosts:
     c_ghost: float  # extra minutes lost when the question goes unanswered
     asks: int = 0
     answers: int = 0
+    prior_answers: float = 4.0
+    prior_nonanswers: float = 2.0
+
+    def __post_init__(self) -> None:
+        if not all(math.isfinite(v) and v >= 0 for v in (self.c_ask, self.c_ghost)):
+            raise ValueError("channel costs must be finite and non-negative")
+        if self.answers > self.asks or self.asks < 0 or self.answers < 0:
+            raise ValueError("invalid ask/answer counts")
+        if not all(math.isfinite(v) and v > 0 for v in (self.prior_answers, self.prior_nonanswers)):
+            raise ValueError("response prior parameters must be finite and positive")
 
     @property
     def rho(self) -> float:
-        """Posterior mean response rate under a Beta(1, 1) prior."""
-        if self.answers > self.asks or self.asks < 0 or self.answers < 0:
-            raise ValueError("invalid ask/answer counts")
-        return (self.answers + 1) / (self.asks + 2)
+        """Posterior response mean; Beta(4, 2) is a configurable warm assumption, not calibration."""
+        return (self.answers + self.prior_answers) / (
+            self.asks + self.prior_answers + self.prior_nonanswers
+        )
+
+
+def experiment_assignment(key: str) -> tuple[bool, bool]:
+    """Stable incident-level 10% no-ask holdout, then 5% exploration of remaining incidents.
+
+    Callers must use a persisted tenant/incident identifier, never ticket text.
+    Separate digest namespaces prevent exploration from selecting the holdout.
+    """
+    if not key:
+        raise ValueError("experiment key must not be empty")
+    holdout = int.from_bytes(hashlib.sha256(f"holdout:v1:{key}".encode()).digest()[:8]) % 10 == 0
+    explore = int.from_bytes(hashlib.sha256(f"explore:v1:{key}".encode()).digest()[:8]) % 20 == 0
+    return holdout, explore and not holdout
 
 
 class ThetaTable:
@@ -77,7 +101,7 @@ class ThetaTable:
         n_teams: int = N_TEAMS,
         kappa: float = 10.0,
     ) -> None:
-        if kappa <= 0:
+        if not math.isfinite(kappa) or kappa <= 0 or n_teams < 1:
             raise ValueError("kappa must be positive")
         self.kappa = kappa
         self.n_teams = n_teams
@@ -90,8 +114,10 @@ class ThetaTable:
 
     def add(self, slot: Slot, value: str, team: int, weight: float = 1.0) -> None:
         """Record one observation. Silver labels use weight 0.3, human labels 1.0."""
-        if weight <= 0:
+        if not math.isfinite(weight) or weight <= 0:
             raise ValueError("weight must be positive")
+        if not 0 <= team < self.n_teams:
+            raise ValueError("team index outside table")
         self.counts[slot][self.values[slot].index(value), team] += weight
 
     def theta(self, slot: Slot) -> FloatArray:
@@ -121,13 +147,15 @@ def route_risk(
     tau_hat: float | None,
     conformal_set: Sequence[int],
     critical_contradiction: bool,
+    queue_tau_hat: Mapping[int, float | None] | None = None,
 ) -> tuple[float, int]:
     """Expected delay of the cost-minimising route, or +inf if routing is not allowed."""
     expected = probs @ costs.delay
     k = int(np.argmin(expected))
+    threshold = tau_hat if queue_tau_hat is None else queue_tau_hat.get(k)
     allowed = (
-        tau_hat is not None
-        and float(probs.max()) >= tau_hat
+        threshold is not None
+        and float(probs.max()) >= threshold
         and k in conformal_set
         and len(conformal_set) <= MAX_ROUTABLE_SET_SIZE
         and not critical_contradiction
@@ -153,6 +181,12 @@ class GateInput:
     contradicted_critical: frozenset[Slot]
     tau_hat: float | None
     no_ask_holdout: bool = False
+    exploration_key: str | None = None
+    critical_missing_slots: frozenset[Slot] = frozenset()
+    queue_tau_hat: Mapping[int, float | None] | None = None
+    answer_tau_hat: float | None = None
+    answer_queue_tau_hat: Mapping[int, float | None] | None = None
+    answer_conformal: ConformalCalibrator | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -177,8 +211,10 @@ def ask_risk(inp: GateInput, slot: Slot, r_now: float) -> SlotRisk:
         remaining = (
             inp.contradicted_critical if value == UNKNOWN_ANSWER else inp.contradicted_critical - {slot}
         )
+        answer_set = inp.answer_conformal or inp.conformal
         r_route_a, _ = route_risk(
-            post[a], inp.costs, inp.tau_hat, inp.conformal.predict_set(post[a]), bool(remaining)
+            post[a], inp.costs, inp.answer_tau_hat, answer_set.predict_set(post[a]), bool(remaining),
+            inp.answer_queue_tau_hat,
         )
         r_after += float(p_answer[a]) * min(r_route_a, inp.costs.c_def)
     rho = inp.channel.rho
@@ -189,7 +225,7 @@ def ask_risk(inp: GateInput, slot: Slot, r_now: float) -> SlotRisk:
 def _defer_reason(inp: GateInput, cset: Sequence[int]) -> DeferReason:
     if not cset:
         return DeferReason.NO_CONFORMING_TEAM
-    if inp.tau_hat is None:
+    if inp.tau_hat is None and not any(t is not None for t in (inp.queue_tau_hat or {}).values()):
         return DeferReason.SHADOW_MODE
     if len(cset) > MAX_ROUTABLE_SET_SIZE:
         return DeferReason.SET_TOO_LARGE
@@ -201,18 +237,38 @@ def _defer_reason(inp: GateInput, cset: Sequence[int]) -> DeferReason:
 def decide(inp: GateInput) -> GateOutput:
     """Minimum expected delay over ROUTE, ASK (best slot), DEFER."""
     probs = np.asarray(inp.probs, dtype=np.float64)
-    if probs.ndim != 1 or abs(float(probs.sum()) - 1.0) > 1e-6 or np.any(probs < 0):
+    if (
+        probs.ndim != 1
+        or not np.isfinite(probs).all()
+        or abs(float(probs.sum()) - 1.0) > 1e-6
+        or np.any(probs < 0)
+        or len(probs) != inp.costs.delay.shape[0]
+    ):
         raise ValueError("probs must be a probability vector")
     cset = tuple(inp.conformal.predict_set(probs))
-    # An empty set forbids ROUTE (route_risk requires k in the set). A question may
-    # still be worth asking: a ticket with no evidence is the case ASK exists for.
-    r_route, team = route_risk(probs, inp.costs, inp.tau_hat, cset, bool(inp.contradicted_critical))
+    # An empty set signals no conforming team; fail closed before any question
+    # policy or exploration can reinterpret this out-of-distribution result.
+    if not cset:
+        return GateOutput(Action.DEFER, None, None, DeferReason.NO_CONFORMING_TEAM,
+                          math.inf, inp.costs.c_def, cset, ())
+    r_route, team = route_risk(
+        probs, inp.costs, inp.tau_hat, cset, bool(inp.contradicted_critical), inp.queue_tau_hat
+    )
     r_now = min(r_route, inp.costs.c_def)
     risks = tuple(ask_risk(inp, slot, r_now) for slot in inp.askable_slots if slot in inp.theta.values)
-    if risks and not inp.no_ask_holdout:
+    assigned_holdout, exploration = (
+        experiment_assignment(inp.exploration_key) if inp.exploration_key else (False, False)
+    )
+    if risks and not (inp.no_ask_holdout or assigned_holdout):
         best = min(risks, key=lambda r: r.r_ask)
         if best.r_ask < r_now:
             return GateOutput(Action.ASK, None, best.slot, None, r_route, r_now, cset, risks)
+        # Exploration learns the response/answer model even when every posterior
+        # in a cold-start tenant must DEFER. It never enables an uncertified route.
+        critical = [r for r in risks if r.slot in inp.critical_missing_slots]
+        if exploration and len(cset) > 1 and critical:
+            selected = min(critical, key=lambda r: (r.r_ask, r.slot.value))
+            return GateOutput(Action.ASK, None, selected.slot, None, r_route, r_now, cset, risks)
     if r_route <= inp.costs.c_def:
         return GateOutput(Action.ROUTE, team, None, None, r_route, r_now, cset, risks)
     return GateOutput(Action.DEFER, None, None, _defer_reason(inp, cset), r_route, r_now, cset, risks)
@@ -245,14 +301,15 @@ def finalize_after_answer(inp: GateInput, slot: Slot, answer: str | None) -> Gat
     remaining = inp.contradicted_critical - {slot} if informative else inp.contradicted_critical
     updated = GateInput(
         probs=posterior,
-        conformal=inp.conformal,
+        conformal=inp.answer_conformal or inp.conformal,
         costs=inp.costs,
         theta=inp.theta,
         channel=inp.channel,
         askable_slots=(),
         contradicted_critical=frozenset(remaining),
-        tau_hat=inp.tau_hat,
+        tau_hat=inp.answer_tau_hat,
         no_ask_holdout=True,
+        queue_tau_hat=inp.answer_queue_tau_hat,
     )
     return decide(updated)
 
@@ -268,6 +325,7 @@ __all__ = [
     "ask_risk",
     "bayes_update",
     "decide",
+    "experiment_assignment",
     "finalize_after_answer",
     "posterior_after_answer",
     "route_risk",

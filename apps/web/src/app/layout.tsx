@@ -23,7 +23,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           Skip to content
         </a>
         <SiteNav />
-        <main id="main" className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        <div className="workspace-content">
+          <header className="workspace-topbar"><span>ResolveIT AI <span aria-hidden="true">/</span> Workspace</span><span className="topbar-badge">CONTROLLED SANDBOX</span></header>
+          <main id="main" className="workspace-main">{children}</main>
+          <footer className="workspace-footer"><span>Every decision should have evidence.</span><span>English · हिन्दी · Hinglish</span></footer>
+        </div>
       </body>
     </html>
   );

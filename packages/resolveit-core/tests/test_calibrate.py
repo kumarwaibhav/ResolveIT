@@ -7,10 +7,13 @@ import numpy as np
 import pytest
 
 from resolveit_core.calibrate.conformal_selective import (
+    binomial_risk_upper,
     conformal_quantile,
+    empirical_bernstein_upper,
     fit_conformal,
     fit_temperature,
     log_binom_cdf,
+    select_queue_taus,
     select_tau,
     softmax,
 )
@@ -100,6 +103,40 @@ def test_select_tau_certifies_clean_model_and_starts_at_min_routed() -> None:
     assert res.tau_hat == 0.50
     assert res.steps[0].n_routed >= 60
     assert all(a.tau > b.tau for a, b in zip(res.steps, res.steps[1:], strict=False))
+
+
+def test_adaptive_grid_can_recover_after_failing_high_tail() -> None:
+    conf = np.concatenate([np.full(60, 0.995), np.full(5000, 0.9)])
+    errors = np.zeros(len(conf), dtype=bool)
+    errors[:5] = True
+    result = select_tau(conf, errors)
+    assert not result.steps[0].passed
+    assert result.tau_hat == 0.5
+
+
+def test_queue_graduation_keeps_low_support_shadow() -> None:
+    conf = np.full(1501, 0.95)
+    queue = np.concatenate([np.zeros(1500, dtype=np.int64), np.ones(1, dtype=np.int64)])
+    result = select_queue_taus(conf, np.zeros(1501, dtype=bool), queue, n_queues=3)
+    assert result[0].tau_hat == 0.5
+    assert result[1].tau_hat is None and result[2].tau_hat is None
+    assert sum(r.delta for r in result.values()) == pytest.approx(0.05)
+
+
+def test_bounds_and_grid_validation() -> None:
+    assert binomial_risk_upper(0, 60, 0.05) < 0.05
+    assert binomial_risk_upper(0, 0, 0.05) == 1
+    assert empirical_bernstein_upper(0, 1000, 0.05) < 0.01
+    with pytest.raises(ValueError):
+        select_tau(np.array([np.nan]), np.array([False]))
+    with pytest.raises(ValueError):
+        select_tau(np.array([0.9]), np.array([False]), step=0)
+    with pytest.raises(ValueError):
+        select_tau(np.array([0.9]), np.array([False]), step=1e-300)
+    uneven = select_tau(np.full(200, 0.9), np.zeros(200, dtype=bool),
+                        tau_min=0, tau_max=1, step=0.6)
+    assert all(0 <= item.tau <= 1 for item in uneven.steps)
+    assert uneven.steps[-1].tau == 0
 
 
 @pytest.mark.slow
