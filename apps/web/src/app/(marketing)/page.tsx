@@ -22,8 +22,8 @@ import { TriageDemo } from "@/components/landing/triage-demo";
 import { Reveal, ScrollReveal } from "@/components/motion";
 
 export const metadata: Metadata = {
-  title: { absolute: "ResolveIT · Ambiguity in. One calibrated path out." },
-  description: "ResolveIT reads IT problems in the words people actually use, then routes, asks one question, or hands off to a person. Never a guess.",
+  title: { absolute: "ResolveIT · AI ticket triage for IT service desks" },
+  description: "ResolveIT reads IT tickets the way people write them and sends each one to the right team. When it is not sure, it asks one question or hands the ticket to a person.",
 };
 
 const FEATURES = [
@@ -56,25 +56,18 @@ export default function LandingPage() {
     <div className="overflow-x-clip">
       {/* Hero */}
       <section aria-labelledby="hero-title" className="relative -mt-[4.25rem] overflow-hidden">
-        <HeroWave className="absolute inset-x-0 top-0 h-[52vh] min-h-[340px] sm:h-[66vh] lg:h-[74vh] lg:max-h-[720px]" />
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-[38vh] h-[36vh] bg-gradient-to-b from-transparent to-background sm:top-[50vh] lg:top-[min(56vh,560px)]" />
-        <div className="relative mx-auto grid max-w-6xl items-end gap-8 px-5 pb-16 pt-[38vh] sm:pt-[44vh] lg:grid-cols-[1.55fr_1fr] lg:gap-14 lg:pt-[min(48vh,470px)]">
+        <HeroWave className="absolute inset-x-0 top-0 h-[30vh] min-h-[230px] sm:h-[34vh] lg:h-[38vh] lg:max-h-[380px]" />
+        <div className="relative mx-auto grid max-w-6xl items-center gap-8 px-5 pb-16 pt-[max(29vh,220px)] sm:pt-[33vh] lg:grid-cols-[1.5fr_1fr] lg:gap-14 lg:pt-[min(36vh,360px)]">
           <Reveal>
-            <p className="eyebrow inline-flex items-center gap-2">
-              <span aria-hidden="true" className="h-px w-6 bg-signal" /> Incident intelligence for IT teams
-            </p>
-            <h1 id="hero-title" className="text-[clamp(2.75rem,7vw,5rem)] font-semibold leading-[0.95] tracking-[-0.055em]">
-              Ambiguity in.
-              <br />
-              One <span className="text-signal">calibrated</span>
-              <br />
-              path out.
+            <p className="kicker">AI ticket triage for IT service desks</p>
+            <h1 id="hero-title" className="text-[clamp(2.75rem,6.6vw,5rem)] font-semibold leading-[0.98] tracking-[-0.055em] text-balance">
+              Every IT ticket, to the <span className="text-signal">right team</span>.
             </h1>
           </Reveal>
           <Reveal delay={0.08}>
             <p className="max-w-md text-lg leading-relaxed text-muted-foreground">
-              ResolveIT reads IT problems in the words people actually use. Then it routes the ticket, asks one question, or hands it to a person.
-              <span className="text-foreground"> Never a guess.</span>
+              ResolveIT reads tickets the way people write them, in English, Hindi or Hinglish, and decides where each one goes in about 40 ms. Not sure? It asks one question or hands the ticket to a person.
+              <span className="text-foreground"> It never guesses.</span>
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link href="#demo" className="workspace-button primary !min-h-12 !rounded-full !px-6 text-[15px]">

@@ -36,7 +36,7 @@ const REASON: Record<string, string> = {
 const CHANNEL_ICON = { Slack: MessageSquare, "Teams chat": MessageSquare, Email: Mail, Portal: MessageSquare, "Phone transcript": Phone, WhatsApp: Smartphone } as const;
 
 function Outcome({ o }: { o: Observed | undefined }) {
-  if (!o) return <p className="text-xs text-muted-foreground">Not yet run against the live engine.</p>;
+  if (!o) return <p className="text-[13px] text-muted-foreground">Not yet run against the live engine.</p>;
   const view =
     o.state === "ROUTED"
       ? { Icon: Route, label: `Routed to ${team(o.routed_team)}`, cls: "bg-primary text-primary-foreground" }
@@ -51,7 +51,7 @@ function Outcome({ o }: { o: Observed | undefined }) {
         <view.Icon aria-hidden="true" className="size-4 shrink-0" />
         {view.label}
       </p>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-[13px] text-muted-foreground">
         {o.found.length > 0 ? `Read: ${o.found.map((s) => SLOT_LABEL[s] ?? s).join(", ")}` : "No details read"}
         {o.top_team && o.top_p !== null ? ` · top guess ${team(o.top_team)} ${(o.top_p * 100).toFixed(0)}%` : ""}
       </p>
@@ -64,10 +64,10 @@ function Card({ s, o }: { s: Scenario; o: Observed | undefined }) {
   return (
     <article className="glass flex h-full flex-col rounded-3xl p-6">
       <div className="flex items-center justify-between gap-3">
-        <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
+        <span className="inline-flex items-center gap-2 text-[13px] font-medium text-muted-foreground">
           <Icon aria-hidden="true" className="size-4" /> {s.channel} · {s.who}
         </span>
-        <span className="rounded-full border px-2.5 py-0.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">{KIND_LABEL[s.kind].label}</span>
+        <span className="rounded-full border px-2.5 py-0.5 font-mono text-[13px] uppercase tracking-wider text-muted-foreground">{KIND_LABEL[s.kind].label}</span>
       </div>
       <h3 className="mt-4 text-lg font-bold tracking-[-0.02em]">{s.title}</h3>
       <blockquote lang={s.locale === "hi" ? "hi" : undefined} className="mt-3 rounded-2xl rounded-tl-sm border bg-card px-4 py-3 text-[15px] leading-relaxed">
@@ -133,7 +133,7 @@ export function ScenarioGallery({ observed, verifiedAt }: { observed: Record<str
           ))}
         </AnimatePresence>
       </motion.ul>
-      <p className="mt-8 text-center text-xs text-muted-foreground">
+      <p className="mt-8 text-center text-[13px] text-muted-foreground">
         {verifiedAt ? `Outcomes recorded from the live demo engine on ${verifiedAt.slice(0, 10)}, synthetic demo bundle.` : "Outcomes will appear once recorded from the live engine."}
       </p>
     </div>

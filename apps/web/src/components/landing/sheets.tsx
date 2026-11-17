@@ -17,7 +17,7 @@ export function SplitHead({ id, title, sub, eyebrow, children }: { id: string; t
   return (
     <ScrollReveal className="grid gap-6 lg:grid-cols-2 lg:items-end lg:gap-16">
       <div>
-        {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
+        {eyebrow ? <p className="kicker">{eyebrow}</p> : null}
         <h2 id={id} className="text-[clamp(2.1rem,4.6vw,3.6rem)] font-semibold leading-[1.02] tracking-[-0.045em] text-balance">
           {title}
         </h2>

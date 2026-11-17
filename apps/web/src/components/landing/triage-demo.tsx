@@ -141,7 +141,7 @@ function Panel({ Icon, title, idle, on, typing, children }: { Icon: typeof Route
         on ? "border-signal/60 shadow-[0_0_0_1px_var(--signal),0_18px_50px_-20px_var(--glow)]" : "",
       )}
     >
-      <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+      <p className="flex items-center gap-2 text-[13px] font-medium text-muted-foreground">
         <Icon aria-hidden="true" className={cn("size-3.5", on && "text-signal")} /> {title}
       </p>
       <div className="mt-2 min-h-11 text-sm">
@@ -236,7 +236,7 @@ export function TriageDemo() {
                 )}
               >
                 <span className="block text-sm font-semibold">{p.label}</span>
-                <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-muted-foreground">“{s.text}”</span>
+                <span className="mt-1 line-clamp-2 block text-[13px] leading-relaxed text-muted-foreground">“{s.text}”</span>
               </button>
             );
           })}
@@ -256,18 +256,18 @@ export function TriageDemo() {
           <div className="lg:text-center">
             <p className="mono-label">Top team score</p>
             <p className="text-3xl font-semibold tabular tracking-[-0.03em]">{scoring ? r.top_p.toFixed(2) : "—"}</p>
-            <p className="text-xs text-muted-foreground">{scoring ? `${r.plausible.length} plausible ${r.plausible.length === 1 ? "team" : "teams"}` : "Reading…"}</p>
+            <p className="text-[13px] text-muted-foreground">{scoring ? `${r.plausible.length} plausible ${r.plausible.length === 1 ? "team" : "teams"}` : "Reading…"}</p>
           </div>
         </div>
 
         <div className="space-y-2.5">
           <Panel Icon={Route} title="Team queue" idle="Standing by" on={phase >= LAYERS.length && outcome === "route"} typing={typing}>
             <span className="font-semibold">{TEAM_LABEL[r.routed_team ?? ""]}</span>
-            <span className="block text-xs text-muted-foreground">Evidence attached: {r.found.map((f) => SLOT_LABEL[f] ?? f).join(", ")}</span>
+            <span className="block text-[13px] text-muted-foreground">Evidence attached: {r.found.map((f) => SLOT_LABEL[f] ?? f).join(", ")}</span>
           </Panel>
           <Panel Icon={CircleHelp} title="One question to the reporter" idle="Not needed yet" on={phase >= LAYERS.length && outcome === "ask"} typing={typing}>
             <span className="font-semibold" lang="hi-Latn">“{r.question}”</span>
-            <span className="block text-xs text-muted-foreground">Which system or app is this about?</span>
+            <span className="block text-[13px] text-muted-foreground">Which system or app is this about?</span>
           </Panel>
           <Panel
             Icon={r.defer_reason === "security_escalation" ? ShieldAlert : UserRound}
@@ -277,7 +277,7 @@ export function TriageDemo() {
             typing={typing}
           >
             <span className="font-semibold">{r.defer_reason === "security_escalation" ? "Flagged for Security" : `Suggested: ${TEAM_LABEL[r.recommended_team ?? ""]}`}</span>
-            <span className="block text-xs text-muted-foreground">
+            <span className="block text-[13px] text-muted-foreground">
               {r.defer_reason === "security_escalation" ? "No questions asked of the reporter." : "The person decides. The suggestion saves them time."}
             </span>
           </Panel>
@@ -296,7 +296,7 @@ export function TriageDemo() {
               </motion.span>
             ) : null}
           </AnimatePresence>
-          <button type="button" onClick={run} className="ml-auto inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-xs font-medium text-muted-foreground hover:text-foreground">
+          <button type="button" onClick={run} className="ml-auto inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium text-muted-foreground hover:text-foreground">
             <RotateCcw aria-hidden="true" className="size-3.5" /> Replay
           </button>
         </div>
@@ -312,7 +312,7 @@ export function TriageDemo() {
             <span className="sr-only">Working through the five layers.</span>
           )}
         </p>
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="mt-2 text-[13px] text-muted-foreground">
           Recorded from the live engine on {VERIFIED.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}. Underlined: the words the rules read.
         </p>
       </div>

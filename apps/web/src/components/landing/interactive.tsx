@@ -62,7 +62,7 @@ export function TrySandbox() {
             </button>
           ))}
         </div>
-        <p className="mt-5 text-xs text-muted-foreground">This preview runs on your device; nothing is sent. The full decision runs in a signed-in workspace.</p>
+        <p className="mt-5 text-[13px] text-muted-foreground">This preview runs on your device; nothing is sent. The full decision runs in a signed-in workspace.</p>
       </div>
       <div className="p-6 sm:p-8">
         <SandboxStatus found={result.found.length} total={total} security={result.security} />

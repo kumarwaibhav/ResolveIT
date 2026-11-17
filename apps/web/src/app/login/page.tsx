@@ -41,13 +41,9 @@ export default function LoginPage() {
       </header>
       <main id="main" tabIndex={-1} className="mx-auto grid outline-none max-w-6xl items-center gap-10 px-5 pb-16 pt-4 lg:grid-cols-[1.1fr_1fr] lg:pt-10">
         <Reveal className="order-2 lg:order-1">
-          <p className="eyebrow inline-flex items-center gap-2">
-            <span aria-hidden="true" className="h-px w-6 bg-signal" /> Incident intelligence for IT teams
-          </p>
-          <h1 className="text-gradient text-[clamp(2.4rem,5.5vw,4.25rem)] font-bold leading-[0.98] tracking-[-0.05em]">
-            Ambiguity in.
-            <br />
-            One <span className="text-signal [-webkit-text-fill-color:var(--signal)]">calibrated</span> path out.
+          <p className="kicker">AI ticket triage for IT service desks</p>
+          <h1 className="text-[clamp(2.4rem,5.5vw,4.25rem)] font-semibold leading-[0.98] tracking-[-0.05em]">
+            Every IT ticket, to the <span className="text-signal">right team</span>.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
             People describe IT problems in their own words. ResolveIT shows what it understood, then routes the ticket, asks one question, or hands it

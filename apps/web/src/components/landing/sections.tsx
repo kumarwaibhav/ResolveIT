@@ -35,7 +35,7 @@ export function ProofCards() {
             />
           ))}
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">One square per ticket it routed on its own.</p>
+        <p className="mt-3 text-[13px] text-muted-foreground">One square per ticket it routed on its own.</p>
       </div>
 
       <div className="flex flex-col rounded-3xl border bg-card p-6 sm:p-8">
@@ -60,7 +60,7 @@ export function ProofCards() {
               </div>
             </div>
           ))}
-          <p className="flex items-center gap-2 text-xs text-muted-foreground">
+          <p className="flex items-center gap-2 text-[13px] text-muted-foreground">
             <span aria-hidden="true" className="h-3 w-px bg-foreground" /> Target: 90% inside the plausible set
           </p>
         </div>
@@ -77,7 +77,7 @@ export function ProofCards() {
               <NumberTicker value={x.v} suffix={x.s} />
             </p>
             <p className="mt-1 text-sm font-medium">{x.l}</p>
-            <p className="text-xs text-muted-foreground">{x.n}</p>
+            <p className="text-[13px] text-muted-foreground">{x.n}</p>
           </li>
         ))}
       </ul>
@@ -108,7 +108,7 @@ function WindowBody({ i }: { i: number }) {
         </div>
         <div className="flex items-center justify-between rounded-xl border border-signal/40 p-4">
           <span>
-            <span className="block text-xs text-muted-foreground">Sent to</span>
+            <span className="block text-[13px] text-muted-foreground">Sent to</span>
             <span className="text-lg font-semibold">Email & Collaboration</span>
           </span>
           <span className="font-mono text-sm tabular text-muted-foreground">score 0.97</span>
@@ -118,7 +118,7 @@ function WindowBody({ i }: { i: number }) {
   if (i === 1)
     return (
       <div className="overflow-hidden rounded-xl border">
-        <div className="grid grid-cols-[1.6fr_1fr_1fr_auto] gap-3 border-b bg-muted/50 px-4 py-2 text-xs text-muted-foreground">
+        <div className="grid grid-cols-[1.6fr_1fr_1fr_auto] gap-3 border-b bg-muted/50 px-4 py-2 text-[13px] text-muted-foreground">
           <span>Ticket</span>
           <span>Reviewer A</span>
           <span>Reviewer B</span>
@@ -137,7 +137,7 @@ function WindowBody({ i }: { i: number }) {
             {ok ? (
               <CheckCircle2 aria-label="Agree" className="size-4 text-ok" />
             ) : (
-              <span className="rounded-full bg-warn-surface px-2 py-0.5 text-[11px] font-medium text-warn">Third look</span>
+              <span className="rounded-full bg-warn-surface px-2 py-0.5 text-xs font-medium text-warn">Third look</span>
             )}
           </div>
         ))}
@@ -188,7 +188,7 @@ function WindowBody({ i }: { i: number }) {
           <li key={String(n)} className={cn("flex items-center gap-3 rounded-xl border p-3 text-sm", !done && "border-dashed")}>
             {done ? <CheckCircle2 aria-hidden="true" className="size-4 text-ok" /> : <CircleDashed aria-hidden="true" className="size-4 text-muted-foreground" />}
             <span className="font-medium">{n}</span>
-            <span className="ml-auto text-xs text-muted-foreground">{note}</span>
+            <span className="ml-auto text-[13px] text-muted-foreground">{note}</span>
             <span className="sr-only">{done ? "done" : "not yet"}</span>
           </li>
         ))}
@@ -249,7 +249,7 @@ export function ProductSteps() {
                   </button>
                 ))}
               </div>
-              <span className="ml-auto hidden font-mono text-[11px] text-muted-foreground sm:inline">demo workspace</span>
+              <span className="ml-auto hidden font-mono text-[13px] text-muted-foreground sm:inline">demo workspace</span>
             </div>
             <div className="min-h-[340px] p-5 sm:p-6">
               <AnimatePresence mode="wait" initial={false}>
@@ -322,7 +322,7 @@ export function ReviewLoop() {
                   <span className="sr-only">Step {i + 1}: </span>
                   {n.t}
                 </span>
-                <span className="block text-[11px] leading-snug text-muted-foreground">{n.d}</span>
+                <span className="block text-[13px] leading-snug text-muted-foreground">{n.d}</span>
               </li>
             );
           })}
@@ -391,7 +391,7 @@ function Node({ title, sub, hot, children }: { title: string; sub: string; hot?:
     <div className={cn("relative rounded-xl border bg-card px-4 py-3", hot && "border-signal/70 shadow-[0_0_0_1px_var(--signal),0_16px_44px_-18px_var(--glow)]")}>
       {children}
       <p className="text-sm font-semibold">{title}</p>
-      <p className="text-xs text-muted-foreground">{sub}</p>
+      <p className="text-[13px] text-muted-foreground">{sub}</p>
     </div>
   );
 }
@@ -427,7 +427,7 @@ export function Channels() {
       </div>
       <div className="mt-6 space-y-5">
         <div className="rounded-2xl border border-dashed p-4 sm:p-5">
-          <p className="mb-3 font-mono text-[11px] text-signal">ResolveIT boundary</p>
+          <p className="mb-3 font-mono text-xs text-signal">ResolveIT boundary</p>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={mode}
@@ -446,7 +446,7 @@ export function Channels() {
               <Node title={m.out[0]} sub={m.out[1]} />
             </motion.div>
           </AnimatePresence>
-          <p className="mt-4 text-xs text-muted-foreground">Every ticket is encrypted and saved before any model reads it.</p>
+          <p className="mt-4 text-[13px] text-muted-foreground">Every ticket is encrypted and saved before any model reads it.</p>
         </div>
         <p className="flex max-w-2xl items-start gap-2 text-sm leading-relaxed text-muted-foreground">
           <ShieldCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-signal" /> {m.note}
