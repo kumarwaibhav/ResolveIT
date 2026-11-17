@@ -1,0 +1,152 @@
+[
+ {
+  "id": "net-vpn",
+  "text": "VPN keeps disconnecting every few minutes since this morning, I can't stay on the CRM",
+  "locale": "en"
+ },
+ {
+  "id": "net-wifi",
+  "text": "Wifi is not working on the 3rd floor since today, laptops show no internet",
+  "locale": "en"
+ },
+ {
+  "id": "idm-sso",
+  "text": "Okta keeps asking for MFA again and again and never lets me in",
+  "locale": "en"
+ },
+ {
+  "id": "idm-password",
+  "text": "I changed my password yesterday and now my account is locked on every app",
+  "locale": "en"
+ },
+ {
+  "id": "mail-outlook",
+  "text": "Outlook keeps crashing for the whole floor since this morning",
+  "locale": "en"
+ },
+ {
+  "id": "mail-teams",
+  "text": "Microsoft Teams calls drop after a few seconds, happens every time I present",
+  "locale": "en"
+ },
+ {
+  "id": "hw-laptop",
+  "text": "My ThinkPad laptop is stuck on the boot screen since yesterday",
+  "locale": "en"
+ },
+ {
+  "id": "hw-printer",
+  "text": "The printer on floor 2 is not printing, print queue is stuck, not urgent",
+  "locale": "en"
+ },
+ {
+  "id": "sw-licence",
+  "text": "My Adobe licence says expired and the activation key is not accepted",
+  "locale": "en"
+ },
+ {
+  "id": "db-postgres",
+  "text": "Postgres database queries are timing out for the orders service since 10 minutes ago",
+  "locale": "en"
+ },
+ {
+  "id": "cloud-k8s",
+  "text": "Kubernetes pods in the payments cluster keep restarting on AWS, production is down",
+  "locale": "en"
+ },
+ {
+  "id": "erp-sap",
+  "text": "SAP is not letting me post invoices today, month end close is blocked",
+  "locale": "en"
+ },
+ {
+  "id": "hr-payslip",
+  "text": "My payslip for this month is not showing in Workday",
+  "locale": "en"
+ },
+ {
+  "id": "devops-pipeline",
+  "text": "Jenkins pipeline is failing because all build agents are offline, nobody can deploy",
+  "locale": "en"
+ },
+ {
+  "id": "av-projector",
+  "text": "The projector in the main conference room shows no signal, board meeting in 20 minutes",
+  "locale": "en"
+ },
+ {
+  "id": "vague-nothing",
+  "text": "kal se kuch bhi kaam nahi kar raha, please jaldi dekho",
+  "locale": "hinglish"
+ },
+ {
+  "id": "vague-slow",
+  "text": "everything is super slow today, please help",
+  "locale": "en"
+ },
+ {
+  "id": "vague-stopped",
+  "text": "it stopped working again, same as last week",
+  "locale": "en"
+ },
+ {
+  "id": "ml-hindi-mail",
+  "text": "मेरा ईमेल सुबह से नहीं खुल रहा, बहुत ज़रूरी है",
+  "locale": "hi"
+ },
+ {
+  "id": "ml-hinglish-vpn",
+  "text": "vpn baar baar disconnect ho raha hai subah se, poori team ka same issue",
+  "locale": "hinglish"
+ },
+ {
+  "id": "ml-hinglish-laptop",
+  "text": "mera laptop bahut slow hai pehli baar aisa hua, sirf mera issue hai",
+  "locale": "hinglish"
+ },
+ {
+  "id": "cmp-vpn-teams",
+  "text": "VPN disconnects every few minutes and after that MS Teams calls drop, whole team since yesterday",
+  "locale": "en"
+ },
+ {
+  "id": "cmp-sso-sap",
+  "text": "After the Okta update I cannot open SAP or Workday, error on login",
+  "locale": "en"
+ },
+ {
+  "id": "err-hex",
+  "text": "Outlook shows error 0x80070005 when I open shared mailbox, urgent",
+  "locale": "en"
+ },
+ {
+  "id": "err-ora",
+  "text": "Reports fail with ORA-12541 since 2 hours ago, database unreachable",
+  "locale": "en"
+ },
+ {
+  "id": "err-http",
+  "text": "The HR portal returns status 503 for everyone since this morning",
+  "locale": "en"
+ },
+ {
+  "id": "sec-phish",
+  "text": "I clicked a link in an email and typed my password, now my account is sending spam to everyone",
+  "locale": "en"
+ },
+ {
+  "id": "sec-ransom",
+  "text": "all files on the shared drive have strange extensions and there is a ransom note on my screen",
+  "locale": "en"
+ },
+ {
+  "id": "sec-suspicious",
+  "text": "got a suspicious login alert from another country on my email account",
+  "locale": "en"
+ },
+ {
+  "id": "out-everyone",
+  "text": "email is down for everyone in the company since 10 minutes ago, critical",
+  "locale": "en"
+ }
+]

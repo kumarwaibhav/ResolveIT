@@ -19,7 +19,7 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
   const view = (await res.json()) as IncidentView;
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <Link href="/" className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground">
+      <Link href="/intake" className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground">
         <ArrowLeft aria-hidden="true" className="size-4" /> Report another problem
       </Link>
       <h1 className="text-3xl font-bold tracking-[-0.04em]">Incident record</h1>

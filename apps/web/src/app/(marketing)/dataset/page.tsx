@@ -41,7 +41,7 @@ const MODEL = [
 
 export default function DatasetPage() {
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6 px-5 pt-12">
       <WorkspaceHeading
         eyebrow="Learn · Data & model"
         title="What it learned from, and what it proved."

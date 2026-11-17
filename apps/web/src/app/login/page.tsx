@@ -86,7 +86,7 @@ export default function LoginPage() {
                   const result = await response.json();
                   if (!response.ok) throw new Error(result.detail ?? "Sign-in failed");
                   setApiKey("");
-                  router.replace("/review");
+                  router.replace("/intake");
                   router.refresh();
                 } catch (error) {
                   setMessage(error instanceof Error ? error.message : "Sign-in failed");

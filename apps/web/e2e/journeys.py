@@ -33,7 +33,7 @@ def axe(page: Page, label: str) -> None:
 
 
 def submit(page: Page, text: str) -> None:
-    page.goto(BASE)
+    page.goto(BASE + "/intake")
     page.get_by_label("What is going wrong?").fill(text)
     page.get_by_role("button", name="Send ticket").click()
 
@@ -50,7 +50,7 @@ def ask(page: Page) -> None:
 
 def run(page: Page, tag: str) -> None:
     # 1. Typing makes no network calls; the meter updates locally.
-    page.goto(BASE, wait_until="networkidle")  # let the nav link prefetch finish first
+    page.goto(BASE + "/intake", wait_until="networkidle")  # let the nav link prefetch finish first
     calls: list[str] = []
     page.on("request", lambda r: calls.append(r.url))
     page.get_by_label("What is going wrong?").fill("😀 VPN is down again for the whole floor, urgent")

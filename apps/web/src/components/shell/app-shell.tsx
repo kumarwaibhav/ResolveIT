@@ -2,6 +2,9 @@
 
 import {
   BookOpen,
+  Boxes,
+  Code2,
+  Library,
   Bot,
   Database,
   FlaskConical,
@@ -32,7 +35,7 @@ interface NavItem {
 }
 
 const WORKSPACE: NavItem[] = [
-  { href: "/", label: "Report a problem", hint: "Intake", Icon: Inbox },
+  { href: "/intake", label: "Report a problem", hint: "Intake", Icon: Inbox },
   { href: "/review", label: "Review", hint: "Human labels", Icon: UsersRound },
   { href: "/bounce", label: "Bounce analyzer", hint: "Handoffs", Icon: Route },
   { href: "/evaluation", label: "Evaluation", hint: "Evidence", Icon: FlaskConical },
@@ -40,7 +43,10 @@ const WORKSPACE: NavItem[] = [
   { href: "/settings", label: "Settings", hint: "Admin", Icon: Settings2, admin: true },
 ];
 const LEARN: NavItem[] = [
-  { href: "/docs", label: "How it works", hint: "Docs", Icon: BookOpen },
+  { href: "/docs", label: "Docs", hint: "Guide", Icon: BookOpen },
+  { href: "/examples", label: "Examples", hint: "30 tickets", Icon: Library },
+  { href: "/architecture", label: "Architecture", hint: "Diagrams", Icon: Boxes },
+  { href: "/docs/api", label: "API reference", hint: "Dev", Icon: Code2 },
   { href: "/dataset", label: "Data & model", hint: "Dataset", Icon: Database },
 ];
 
@@ -50,9 +56,17 @@ interface Identity {
   is_synthetic: boolean;
 }
 
-function isActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/" || pathname.startsWith("/incidents");
+function matches(pathname: string, href: string): boolean {
+  if (href === "/intake") return pathname === "/intake" || pathname.startsWith("/incidents");
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+const ALL_HREFS = () => [...WORKSPACE, ...LEARN].map((i) => i.href);
+/** The most specific matching link wins, so /docs/api never also lights up /docs. */
+function isActive(pathname: string, href: string): boolean {
+  const best = ALL_HREFS()
+    .filter((h) => matches(pathname, h))
+    .sort((a, b) => b.length - a.length)[0];
+  return best === href;
 }
 
 function NavList({ items, label, pathname, role, onNavigate }: { items: NavItem[]; label: string; pathname: string; role: string | null; onNavigate?: () => void }) {

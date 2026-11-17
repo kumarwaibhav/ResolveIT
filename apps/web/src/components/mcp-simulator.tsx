@@ -1,5 +1,6 @@
 "use client";
 
+import { PageGuide } from "@/components/page-guide";
 import { Check, Copy, Network, PlugZap, Send } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
@@ -112,7 +113,7 @@ export function McpSimulator() {
 
   return (
     <div className="space-y-6">
-      <WorkspaceHeading eyebrow="05 · Agent hand-off" title="Trust the trace." description="AI agents can file tickets through the Model Context Protocol (MCP). Watch every request and response, and see how an agent must quote the user before its answer counts." />
+      <WorkspaceHeading eyebrow="05 · Agent hand-off" title="Trust the trace." description="AI agents can file tickets through the Model Context Protocol (MCP). Watch every request and response, and see how an agent must quote the user before its answer counts." /><PageGuide page="mcp" />
       <section className="surface-panel"><div className="flex items-start gap-3"><span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-signal"><PlugZap className="size-5" /></span><div><p className="eyebrow !mb-1">Standard MCP · 2025-11-25</p><h2 className="panel-title">Connect like any MCP client</h2><p className="panel-copy">See the handshake and the tool list a standard client receives. The adapter is stateless and issues no session ID.</p></div></div><div className="action-row"><button className="workspace-button" disabled={busy} onClick={async () => { setBusy(true); setError(null); try { setStandard(await exchange({ jsonrpc: "2.0", id: "init", method: "initialize", params: { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "resolveit-inspector", version: "0.1.0" } } })); } catch (err) { setError(err instanceof Error ? err.message : "Initialization failed."); } finally { setBusy(false); } }}>Inspect initialize</button><button className="workspace-button" disabled={busy} onClick={async () => { setBusy(true); setError(null); try { setStandard(await exchange({ jsonrpc: "2.0", id: "tools", method: "tools/list", params: {} })); } catch (err) { setError(err instanceof Error ? err.message : "Discovery failed."); } finally { setBusy(false); } }}>Inspect tools/list</button></div>{standard && <div className="mt-5 grid gap-4 md:grid-cols-2"><Json label="Standard request" value={standard.request} /><Json label={`Standard response (HTTP ${standard.status})`} value={standard.response} /></div>}</section>
       <div className="flex items-start gap-3 pt-4"><span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-signal"><Network className="size-5" /></span><div><p className="eyebrow !mb-1">ResolveIT enterprise profile · 2026-07-28</p><h2 className="panel-title">Signed clarification round trips</h2><p className="panel-copy">An opt-in profile: the server signs its request state, and an agent may answer a question only by quoting the user&apos;s own words.</p></div></div>
       <form

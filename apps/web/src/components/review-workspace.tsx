@@ -1,5 +1,6 @@
 "use client";
 
+import { PageGuide } from "@/components/page-guide";
 import { useMemo, useState } from "react";
 import { LocalDraftNotice, WorkspaceHeading } from "@/components/workspace-heading";
 import { agreement, downloadJson, draftSplit, TEAMS } from "@/lib/workspaces";
@@ -27,7 +28,7 @@ function PracticeReviewWorkspace() {
   const update = (field: keyof Rating, value: string) => setRatings((all) => ({ ...all, [record.id]: { ...rating, [field]: value } }));
   const completed = Object.values(ratings).filter((r) => r.a && r.b && (r.a === r.b || r.adjudicated)).length;
   return <>
-    <WorkspaceHeading eyebrow="02 · Review · practice" title="Make judgment visible." description="Two people label each ticket without seeing each other’s answer. Where they disagree, an admin decides. Practise here on clearly marked synthetic reports." ><span className="pill-status">Blind audit mode</span></WorkspaceHeading>
+    <WorkspaceHeading eyebrow="02 · Review · practice" title="Make judgment visible." description="Two people label each ticket without seeing each other’s answer. Where they disagree, an admin decides. Practise here on clearly marked synthetic reports." ><span className="pill-status">Blind audit mode</span></WorkspaceHeading><PageGuide page="review" />
     <LocalDraftNotice />
     <div className="metric-grid"><div className="metric-card"><span>Overlapping label pairs</span><strong>{metrics.n}</strong><small>From your current session</small></div><div className="metric-card"><span>Cohen’s κ</span><strong>{fmt(metrics.kappa)}</strong><small>Undefined for empty or degenerate marginals</small></div><div className="metric-card"><span>Krippendorff’s α · nominal</span><strong>{fmt(metrics.alpha)}</strong><small>Two complete ratings per incident</small></div></div>
     <div className="workspace-grid">

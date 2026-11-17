@@ -65,4 +65,4 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ["/", "/login", "/api/:path*", "/incidents/:path*", "/review/:path*", "/bounce/:path*", "/evaluation/:path*", "/settings/:path*", "/mcp/:path*"] };
+export const config = { matcher: ["/intake/:path*", "/login", "/api/:path*", "/incidents/:path*", "/review/:path*", "/bounce/:path*", "/evaluation/:path*", "/settings/:path*", "/mcp/:path*"] };

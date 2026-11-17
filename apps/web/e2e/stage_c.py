@@ -28,14 +28,14 @@ def login(page: Page, key: str) -> None:
     page.goto(BASE + "/login")
     page.get_by_label("Individual API credential").fill(key)
     page.get_by_role("button", name="Sign in", exact=True).click()
-    expect(page.get_by_role("heading", name="Make judgment visible.")).to_be_visible()
+    expect(page.get_by_role("heading", name="Describe it. We'll take it from there.")).to_be_visible()
 
 
 def run(env: dict[str, str], keys: list[str], incident: str, out: Path) -> dict[str, object]:
     axe_script = (Path(__file__).resolve().parents[1] / "node_modules/axe-core/axe.min.js").read_text(
         encoding="utf-8"
     )
-    pages = ("/", "/review", "/bounce", "/evaluation", "/mcp", "/settings")
+    pages = ("/intake", "/review", "/bounce", "/evaluation", "/mcp", "/settings")
     checks = []
     with sync_playwright() as pw:
         browser = pw.chromium.launch(
@@ -72,7 +72,7 @@ def run(env: dict[str, str], keys: list[str], incident: str, out: Path) -> dict[
                 page.screenshot(path=str(out / f"{width}-{path.strip('/') or 'intake'}.png"), full_page=True)
                 checks.append({"path": path, "width": width, "scheme": mode, "violations": 0})
         page.set_viewport_size({"width": 1440, "height": 1000})
-        page.goto(BASE)
+        page.goto(BASE + "/intake")
         page.get_by_label("What is going wrong?").fill(
             "database is down for the whole floor [synthetic UI intake]"
         )

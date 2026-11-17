@@ -1,8 +1,9 @@
 "use client";
 
+import { PageGuide } from "@/components/page-guide";
 import { ArrowUp, Bot, Languages, ListChecks, MessageCircleQuestion, ShieldAlert, Sparkles } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { DetailMeter } from "@/components/detail-meter";
 import { IncidentPanel } from "@/components/incident/incident-panel";
@@ -12,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { PipelineProgress, PipelineTrack } from "@/components/viz/pipeline";
 import { WorkspaceHeading } from "@/components/workspace-heading";
 import { measure } from "@/lib/meter";
+import { KIND_LABEL, SCENARIOS, scenarioById, type ScenarioKind } from "@/lib/scenarios";
 import { cn } from "@/lib/utils";
 import type { IncidentView, Locale } from "@/lib/types";
 
@@ -21,14 +23,6 @@ const LOCALES: { value: Locale; label: string }[] = [
   { value: "hinglish", label: "Hinglish" },
 ];
 const MAX = 20_000;
-
-/** The four canonical demo tickets (docs/DEMO_WALKTHROUGH.md). Filling the box sends nothing. */
-const EXAMPLES = [
-  { label: "Clear", text: "Outlook keeps crashing for the whole floor since this morning" },
-  { label: "Vague · Hinglish", text: "kal se kuch bhi kaam nahi kar raha, please jaldi dekho" },
-  { label: "Two problems", text: "VPN disconnects every few minutes and after that MS Teams calls drop, whole team since yesterday" },
-  { label: "Security", text: "I clicked a link in an email and typed my password, now my account is sending spam to everyone" },
-];
 
 const FACTS = [
   { Icon: ListChecks, value: "11", label: "details read from every report" },
@@ -54,6 +48,20 @@ export function IntakeWorkspace() {
   const reduce = useReducedMotion();
   const busy = pending !== null;
 
+  useEffect(() => {
+    const sample = scenarioById(new URLSearchParams(window.location.search).get("sample"));
+    if (sample) {
+      setText(sample.text);
+      setLocale(sample.locale);
+    }
+  }, []);
+  const loadSample = (id: string) => {
+    const sample = scenarioById(id);
+    if (!sample) return;
+    setText(sample.text);
+    setLocale(sample.locale);
+  };
+
   const run = async (kind: "new" | "answer", action: () => Promise<IncidentView>) => {
     setPending(kind);
     setError(null);
@@ -76,7 +84,7 @@ export function IntakeWorkspace() {
         description="Write the problem in your own words. You see exactly what was understood, then it goes to the right team, gets one optional question, or reaches a person."
       >
         <span className="pill-status">Human oversight on</span>
-      </WorkspaceHeading>
+      </WorkspaceHeading><PageGuide page="intake" />
 
       <ul className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {FACTS.map(({ Icon, value, label }, i) => (
@@ -130,22 +138,23 @@ export function IntakeWorkspace() {
               </p>
             </div>
 
-            <div>
-              <p className="mono-label mb-2 inline-flex items-center gap-1.5">
-                <Sparkles aria-hidden="true" className="size-3" /> Try an example
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {EXAMPLES.map((ex) => (
-                  <button
-                    key={ex.label}
-                    type="button"
-                    onClick={() => setText(ex.text)}
-                    className="min-h-9 rounded-full border bg-card px-3 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-                  >
-                    {ex.label}
-                  </button>
-                ))}
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+              <div>
+                <label htmlFor="sample" className="mono-label mb-2 inline-flex items-center gap-1.5">
+                  <Sparkles aria-hidden="true" className="size-3" /> Load a real-world example
+                </label>
+                <select id="sample" defaultValue="" onChange={(e) => loadSample(e.target.value)} className="field-input !rounded-xl">
+                  <option value="" disabled>Choose from 30 tickets…</option>
+                  {(Object.keys(KIND_LABEL) as ScenarioKind[]).map((kind) => (
+                    <optgroup key={kind} label={KIND_LABEL[kind].label}>
+                      {SCENARIOS.filter((x) => x.kind === kind).map((x) => (
+                        <option key={x.id} value={x.id}>{x.title} · {x.channel}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
               </div>
+              <a href="/examples" className="inline-flex min-h-11 items-center text-sm font-semibold text-signal underline-offset-4 hover:underline">Browse all</a>
             </div>
 
             <fieldset>

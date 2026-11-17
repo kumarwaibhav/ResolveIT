@@ -1,0 +1,616 @@
+{
+ "verified_at": "2026-11-17T16:09:46+0530",
+ "results": {
+  "net-vpn": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Network",
+   "recommended_team": "Network",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Network",
+   "top_p": 0.949,
+   "plausible": [
+    "Network"
+   ],
+   "found": [
+    "service",
+    "start_time",
+    "frequency"
+   ],
+   "round_trip_ms": 11065
+  },
+  "net-wifi": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Network",
+   "recommended_team": "Network",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Network",
+   "top_p": 0.816,
+   "plausible": [
+    "Network",
+    "Hardware_Endpoint",
+    "Cloud_Infra"
+   ],
+   "found": [
+    "service",
+    "start_time"
+   ],
+   "round_trip_ms": 12918
+  },
+  "idm-sso": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Identity_Access",
+   "recommended_team": "Identity_Access",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Identity_Access",
+   "top_p": 0.971,
+   "plausible": [
+    "Identity_Access"
+   ],
+   "found": [
+    "service",
+    "frequency"
+   ],
+   "round_trip_ms": 9651
+  },
+  "idm-password": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Identity_Access",
+   "recommended_team": "Identity_Access",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Identity_Access",
+   "top_p": 0.832,
+   "plausible": [
+    "Identity_Access",
+    "Hardware_Endpoint"
+   ],
+   "found": [
+    "service",
+    "start_time"
+   ],
+   "round_trip_ms": 9648
+  },
+  "mail-outlook": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Email_Collab",
+   "recommended_team": "Email_Collab",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Email_Collab",
+   "top_p": 0.969,
+   "plausible": [
+    "Email_Collab"
+   ],
+   "found": [
+    "service",
+    "scope",
+    "start_time",
+    "frequency"
+   ],
+   "round_trip_ms": 9556
+  },
+  "mail-teams": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Email_Collab",
+   "recommended_team": "Email_Collab",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Email_Collab",
+   "top_p": 0.813,
+   "plausible": [
+    "Email_Collab",
+    "Cloud_Infra",
+    "DevOps_CICD"
+   ],
+   "found": [
+    "service",
+    "frequency"
+   ],
+   "round_trip_ms": 9729
+  },
+  "hw-laptop": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Hardware_Endpoint",
+   "recommended_team": "Hardware_Endpoint",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Hardware_Endpoint",
+   "top_p": 0.979,
+   "plausible": [
+    "Hardware_Endpoint"
+   ],
+   "found": [
+    "service",
+    "start_time"
+   ],
+   "round_trip_ms": 9837
+  },
+  "hw-printer": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Hardware_Endpoint",
+   "recommended_team": "Hardware_Endpoint",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Hardware_Endpoint",
+   "top_p": 0.83,
+   "plausible": [
+    "Hardware_Endpoint",
+    "Cloud_Infra"
+   ],
+   "found": [
+    "service",
+    "urgency"
+   ],
+   "round_trip_ms": 10102
+  },
+  "sw-licence": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Software_Licensing",
+   "recommended_team": "Software_Licensing",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Software_Licensing",
+   "top_p": 0.948,
+   "plausible": [
+    "Software_Licensing"
+   ],
+   "found": [
+    "service"
+   ],
+   "round_trip_ms": 9572
+  },
+  "db-postgres": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Database",
+   "recommended_team": "Database",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Database",
+   "top_p": 0.975,
+   "plausible": [
+    "Database"
+   ],
+   "found": [
+    "service",
+    "start_time"
+   ],
+   "round_trip_ms": 9798
+  },
+  "cloud-k8s": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Cloud_Infra",
+   "recommended_team": "Cloud_Infra",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Cloud_Infra",
+   "top_p": 0.993,
+   "plausible": [
+    "Cloud_Infra"
+   ],
+   "found": [
+    "service",
+    "frequency",
+    "urgency"
+   ],
+   "round_trip_ms": 9446
+  },
+  "erp-sap": {
+   "state": "DEFERRED",
+   "action": "DEFER",
+   "routed_team": null,
+   "recommended_team": "ERP_Finance",
+   "defer_reason": "risk_above_defer_cost",
+   "question": null,
+   "security_trigger": false,
+   "top_team": "ERP_Finance",
+   "top_p": 0.737,
+   "plausible": [
+    "Hardware_Endpoint",
+    "Cloud_Infra",
+    "ERP_Finance"
+   ],
+   "found": [
+    "service",
+    "start_time"
+   ],
+   "round_trip_ms": 8220
+  },
+  "hr-payslip": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "HR_Systems",
+   "recommended_team": "HR_Systems",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "HR_Systems",
+   "top_p": 0.994,
+   "plausible": [
+    "HR_Systems"
+   ],
+   "found": [
+    "service"
+   ],
+   "round_trip_ms": 9909
+  },
+  "devops-pipeline": {
+   "state": "DEFERRED",
+   "action": "DEFER",
+   "routed_team": null,
+   "recommended_team": "DevOps_CICD",
+   "defer_reason": "risk_above_defer_cost",
+   "question": null,
+   "security_trigger": false,
+   "top_team": "DevOps_CICD",
+   "top_p": 0.785,
+   "plausible": [
+    "Network",
+    "Cloud_Infra",
+    "DevOps_CICD"
+   ],
+   "found": [
+    "service"
+   ],
+   "round_trip_ms": 8331
+  },
+  "av-projector": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Facilities_AV",
+   "recommended_team": "Facilities_AV",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Facilities_AV",
+   "top_p": 0.973,
+   "plausible": [
+    "Facilities_AV"
+   ],
+   "found": [
+    "service"
+   ],
+   "round_trip_ms": 9639
+  },
+  "vague-nothing": {
+   "state": "PENDING_CLARIFICATION",
+   "action": "ASK",
+   "routed_team": null,
+   "recommended_team": "Security",
+   "defer_reason": null,
+   "question": "Yeh problem kis system ya app mein hai?",
+   "security_trigger": false,
+   "top_team": "Security",
+   "top_p": 0.437,
+   "plausible": [
+    "Network",
+    "Email_Collab",
+    "Cloud_Infra",
+    "Security",
+    "Facilities_AV"
+   ],
+   "found": [
+    "start_time",
+    "urgency"
+   ],
+   "round_trip_ms": 8451
+  },
+  "vague-slow": {
+   "state": "PENDING_CLARIFICATION",
+   "action": "ASK",
+   "routed_team": null,
+   "recommended_team": "Facilities_AV",
+   "defer_reason": null,
+   "question": "Which system or app is this about?",
+   "security_trigger": false,
+   "top_team": "Facilities_AV",
+   "top_p": 0.522,
+   "plausible": [
+    "Network",
+    "Identity_Access",
+    "Hardware_Endpoint",
+    "HR_Systems",
+    "Facilities_AV"
+   ],
+   "found": [
+    "start_time"
+   ],
+   "round_trip_ms": 8283
+  },
+  "vague-stopped": {
+   "state": "PENDING_CLARIFICATION",
+   "action": "ASK",
+   "routed_team": null,
+   "recommended_team": "Facilities_AV",
+   "defer_reason": null,
+   "question": "Which system or app is this about?",
+   "security_trigger": false,
+   "top_team": "Facilities_AV",
+   "top_p": 0.55,
+   "plausible": [
+    "Email_Collab",
+    "Hardware_Endpoint",
+    "Security",
+    "Facilities_AV"
+   ],
+   "found": [
+    "start_time",
+    "frequency"
+   ],
+   "round_trip_ms": 8823
+  },
+  "ml-hindi-mail": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Email_Collab",
+   "recommended_team": "Email_Collab",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Email_Collab",
+   "top_p": 0.962,
+   "plausible": [
+    "Email_Collab"
+   ],
+   "found": [
+    "service",
+    "start_time",
+    "urgency"
+   ],
+   "round_trip_ms": 9595
+  },
+  "ml-hinglish-vpn": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Network",
+   "recommended_team": "Network",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Network",
+   "top_p": 0.97,
+   "plausible": [
+    "Network"
+   ],
+   "found": [
+    "service",
+    "scope",
+    "start_time",
+    "frequency"
+   ],
+   "round_trip_ms": 9947
+  },
+  "ml-hinglish-laptop": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Hardware_Endpoint",
+   "recommended_team": "Hardware_Endpoint",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Hardware_Endpoint",
+   "top_p": 0.991,
+   "plausible": [
+    "Hardware_Endpoint"
+   ],
+   "found": [
+    "service",
+    "scope",
+    "frequency"
+   ],
+   "round_trip_ms": 9739
+  },
+  "cmp-vpn-teams": {
+   "state": "DEFERRED",
+   "action": "DEFER",
+   "routed_team": null,
+   "recommended_team": "Network",
+   "defer_reason": "set_too_large",
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Network",
+   "top_p": 0.816,
+   "plausible": [
+    "Network",
+    "Identity_Access",
+    "Email_Collab",
+    "Cloud_Infra"
+   ],
+   "found": [
+    "service",
+    "scope",
+    "start_time"
+   ],
+   "round_trip_ms": 8387
+  },
+  "cmp-sso-sap": {
+   "state": "PENDING_CLARIFICATION",
+   "action": "ASK",
+   "routed_team": null,
+   "recommended_team": "Identity_Access",
+   "defer_reason": null,
+   "question": "Which system or app is this about?",
+   "security_trigger": false,
+   "top_team": "Identity_Access",
+   "top_p": 0.843,
+   "plausible": [
+    "Identity_Access",
+    "Hardware_Endpoint"
+   ],
+   "found": [
+    "service"
+   ],
+   "round_trip_ms": 9011
+  },
+  "err-hex": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Email_Collab",
+   "recommended_team": "Email_Collab",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Email_Collab",
+   "top_p": 0.817,
+   "plausible": [
+    "Network",
+    "Email_Collab",
+    "Cloud_Infra"
+   ],
+   "found": [
+    "service",
+    "error_code",
+    "urgency"
+   ],
+   "round_trip_ms": 9626
+  },
+  "err-ora": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Database",
+   "recommended_team": "Database",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Database",
+   "top_p": 0.837,
+   "plausible": [
+    "Identity_Access",
+    "Database"
+   ],
+   "found": [
+    "service",
+    "start_time",
+    "error_code"
+   ],
+   "round_trip_ms": 9821
+  },
+  "err-http": {
+   "state": "PENDING_CLARIFICATION",
+   "action": "ASK",
+   "routed_team": null,
+   "recommended_team": "Email_Collab",
+   "defer_reason": null,
+   "question": "Which system or app is this about?",
+   "security_trigger": false,
+   "top_team": "Email_Collab",
+   "top_p": 0.412,
+   "plausible": [
+    "Network",
+    "Email_Collab",
+    "Database",
+    "Cloud_Infra",
+    "Facilities_AV"
+   ],
+   "found": [
+    "scope",
+    "start_time",
+    "error_code"
+   ],
+   "round_trip_ms": 8401
+  },
+  "sec-phish": {
+   "state": "DEFERRED",
+   "action": "DEFER",
+   "routed_team": null,
+   "recommended_team": "Security",
+   "defer_reason": "security_escalation",
+   "question": null,
+   "security_trigger": true,
+   "top_team": "Security",
+   "top_p": 0.812,
+   "plausible": [
+    "Email_Collab",
+    "Security"
+   ],
+   "found": [
+    "service",
+    "scope"
+   ],
+   "round_trip_ms": 8293
+  },
+  "sec-ransom": {
+   "state": "PENDING_CLARIFICATION",
+   "action": "ASK",
+   "routed_team": null,
+   "recommended_team": "Cloud_Infra",
+   "defer_reason": null,
+   "question": "Which system or app is this about?",
+   "security_trigger": false,
+   "top_team": "Cloud_Infra",
+   "top_p": 0.344,
+   "plausible": [
+    "Hardware_Endpoint",
+    "Database",
+    "Cloud_Infra",
+    "Security"
+   ],
+   "found": [],
+   "round_trip_ms": 8396
+  },
+  "sec-suspicious": {
+   "state": "DEFERRED",
+   "action": "DEFER",
+   "routed_team": null,
+   "recommended_team": "Security",
+   "defer_reason": "security_escalation",
+   "question": null,
+   "security_trigger": true,
+   "top_team": "Security",
+   "top_p": 0.565,
+   "plausible": [
+    "Email_Collab",
+    "Security"
+   ],
+   "found": [
+    "service"
+   ],
+   "round_trip_ms": 8095
+  },
+  "out-everyone": {
+   "state": "ROUTED",
+   "action": "ROUTE",
+   "routed_team": "Email_Collab",
+   "recommended_team": "Email_Collab",
+   "defer_reason": null,
+   "question": null,
+   "security_trigger": false,
+   "top_team": "Email_Collab",
+   "top_p": 0.992,
+   "plausible": [
+    "Email_Collab"
+   ],
+   "found": [
+    "service",
+    "scope",
+    "start_time",
+    "urgency"
+   ],
+   "round_trip_ms": 9619
+  }
+ }
+}

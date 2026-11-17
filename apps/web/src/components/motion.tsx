@@ -149,3 +149,20 @@ export function RingGauge({ value, size = 120, stroke = 10, className, children 
     </div>
   );
 }
+
+/** Reveal when scrolled into view (once). Reduced motion renders in place. */
+export function ScrollReveal({ children, className, delay = 0, y = 24, as = "div" }: { children: ReactNode; className?: string; delay?: number; y?: number; as?: "div" | "li" }) {
+  const reduce = useReducedMotion();
+  const Comp = as === "li" ? motion.li : motion.div;
+  return (
+    <Comp
+      className={className}
+      initial={reduce ? false : { opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.6, delay, ease: EASE }}
+    >
+      {children}
+    </Comp>
+  );
+}

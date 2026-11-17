@@ -11,7 +11,7 @@ export default function NotFound() {
         <p className="eyebrow mt-6">404</p>
         <h1 className="text-3xl font-bold tracking-[-0.04em]">Nothing here</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">That page or incident does not exist, or it belongs to another workspace.</p>
-        <Link href="/" className="workspace-button primary mt-6">Report a problem</Link>
+        <Link href="/intake" className="workspace-button primary mt-6">Report a problem</Link>
       </div>
     </main>
   );
