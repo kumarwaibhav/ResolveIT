@@ -31,8 +31,17 @@ export async function POST(request: NextRequest) {
   }
   const base = process.env.RESOLVEIT_API_URL;
   if (!base) return NextResponse.json({ detail: "API unavailable" }, { status: 503 });
-  const identity = await fetch(`${base}/v1/me`, { cache: "no-store", headers: { authorization: `Bearer ${apiKey}` } });
-  if (!identity.ok) return NextResponse.json({ detail: "Credential rejected" }, { status: 401 });
+  // A wrong key and an unreachable engine are different problems; say which one it is.
+  const unreachable = () =>
+    NextResponse.json({ detail: "The ResolveIT engine is not reachable right now. Your key was not checked; try again in a minute." }, { status: 503 });
+  let identity: Response;
+  try {
+    identity = await fetch(`${base}/v1/me`, { cache: "no-store", headers: { authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(45_000) });
+  } catch {
+    return unreachable();
+  }
+  if (identity.status === 401 || identity.status === 403) return NextResponse.json({ detail: "Credential rejected" }, { status: 401 });
+  if (!identity.ok) return unreachable();
   const me = await identity.json();
   let sealed: string;
   try { sealed = await sealSession(apiKey); } catch {

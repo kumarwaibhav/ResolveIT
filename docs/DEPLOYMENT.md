@@ -38,8 +38,10 @@ ticket asked then routed, compound asked, security escalated; ~1 s per ticket wa
 Sign in at https://resolveit-one.vercel.app/login with `RESOLVEIT_API_KEY` from `artifacts/deploy/prod.env`.
 
 ## Limits stated honestly
-- Cold start after ~10 min idle: first request waits ~15-30 s while the container loads the model.
+- Cold start after ~3 min idle: first request waits ~15-30 s while the container loads the model.
 - Neon free: 0.5 GB; compute auto-suspends (first query after idle ~1 s slower).
-- Modal Starter credit: if exhausted, the API stops (no charge) until the monthly reset.
+- Modal Starter: $30/month free credit with a payment method on file; keep the workspace usage limit at
+  $30 so usage past the credit stops the API instead of charging. The worker sweep runs hourly and idle
+  containers stop after 3 min to stay inside the credit.
 - Synthetic tenant only; real tenants stay shadow-mode. G2 128-token latency target not met.
 - `infra/hf-space/` is kept as an alternative host (needs HF PRO).

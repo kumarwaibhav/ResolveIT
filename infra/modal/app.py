@@ -56,7 +56,7 @@ REGION = "ap-southeast"
     cpu=2.0,
     memory=3072,
     min_containers=0,
-    scaledown_window=600,
+    scaledown_window=180,  # idle containers stop after 3 min: keeps the demo inside the free monthly credit
     timeout=120,
 )
 @modal.concurrent(max_inputs=16)
@@ -68,10 +68,14 @@ def web():  # type: ignore[no-untyped-def]
 
 
 @app.function(
-    secrets=[secret], region=REGION, cpu=1.0, memory=2048, schedule=modal.Period(minutes=5), timeout=300
+    secrets=[secret], region=REGION, cpu=1.0, memory=2048, schedule=modal.Period(hours=1), timeout=300
 )
 def sweep() -> str:
-    """One worker pass: time out unanswered questions, recover unevaluated incidents."""
+    """Hourly worker pass: time out unanswered questions, recover unevaluated incidents.
+
+    Hourly, not every few minutes: each run starts a container, and on the Starter plan the
+    frequent schedule alone used most of the monthly credit.
+    """
     import asyncio
 
     from resolveit_api.main import create_app
