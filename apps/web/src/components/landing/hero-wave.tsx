@@ -46,6 +46,7 @@ export function HeroWave({ className }: { className?: string }) {
     let ink = "12 12 14";
     let signal = "#c8241a";
     let mono = "ui-monospace, monospace";
+    let light = false;
     let visible = true;
     let raf = 0;
     let last = performance.now();
@@ -55,7 +56,9 @@ export function HeroWave({ className }: { className?: string }) {
 
     const readColors = () => {
       const cs = getComputedStyle(box);
-      const hex = (cs.getPropertyValue("--foreground").trim() || "#0c0c0e").replace("#", "");
+      light = !document.documentElement.classList.contains("dark");
+      // Light mode: the river is drawn in Signal Crimson, so it reads as warm brand texture rather than soot.
+      const hex = (light ? "#d92d20" : cs.getPropertyValue("--foreground").trim() || "#f4f4f5").replace("#", "");
       if (hex.length === 6) ink = `${parseInt(hex.slice(0, 2), 16)} ${parseInt(hex.slice(2, 4), 16)} ${parseInt(hex.slice(4, 6), 16)}`;
       signal = cs.getPropertyValue("--signal").trim() || signal;
       mono = cs.getPropertyValue("--font-mono").trim() || mono;
@@ -90,8 +93,22 @@ export function HeroWave({ className }: { className?: string }) {
     };
 
     // The river: low on the left, rising to the right, swaying slowly. Wide and soft, like the first version.
-    const centre = (x: number) => H * (0.6 - 0.36 * (x / W)) + H * 0.07 * Math.sin((x / W) * Math.PI * 2.1 + t * 0.21);
-    const thick = (x: number) => H * (0.05 + 0.13 * Math.sin(Math.PI * Math.min(1, Math.max(0, x / W)) * 0.95 + 0.15));
+    // The river enters high on the left, above the headline, and sweeps down into the open space on the right.
+    const ss = (a: number, b: number, v: number) => {
+      const k = Math.min(1, Math.max(0, (v - a) / (b - a)));
+      return k * k * (3 - 2 * k);
+    };
+    const narrow = () => W < 768;
+    const centre = (x: number) => {
+      const f = x / W;
+      const lo = narrow() ? 0.1 : 0.15;
+      const hi = narrow() ? 0.3 : 0.62;
+      return H * (lo + (hi - lo) * ss(0.28, 0.9, f)) + H * 0.035 * Math.sin(f * Math.PI * 2.1 + t * 0.21);
+    };
+    const thick = (x: number) => {
+      const f = Math.min(1, Math.max(0, x / W));
+      return H * (narrow() ? 0.04 + 0.05 * ss(0.2, 0.85, f) : 0.03 + 0.11 * ss(0.2, 0.85, f));
+    };
 
     const place = (d: Dot) => {
       const u = d.u + t * SPEED * d.k;
@@ -107,7 +124,7 @@ export function HeroWave({ className }: { className?: string }) {
       // Lens: follow the pointer when present, otherwise drift along the stream.
       if (!lens.steer) {
         lens.idle += dt;
-        lens.tx = W * (0.6 + 0.12 * Math.sin(lens.idle * 0.12));
+        lens.tx = W * (0.74 + 0.1 * Math.sin(lens.idle * 0.12));
         lens.ty = centre(lens.tx);
       }
       const ease = 1 - Math.exp(-dt * (lens.steer ? 9 : 2));
@@ -126,26 +143,32 @@ export function HeroWave({ className }: { className?: string }) {
           hits.push([x, y]);
           continue;
         }
-        const a = (0.12 + 0.56 * d.z) * (1 - 0.5 * Math.abs(d.v)) * edge;
+        const a = (light ? 0.1 + 0.42 * d.z : 0.12 + 0.56 * d.z) * (1 - 0.5 * Math.abs(d.v)) * edge;
         const s = 0.7 + d.z * 1.4;
         ctx.fillStyle = `rgb(${ink} / ${Math.min(0.9, inLens ? a * 1.6 + 0.08 : a)})`;
         ctx.fillRect(x - s / 2, y - s / 2, s, s);
       }
 
       // Tickets the lens would hand to a person simply pop crimson.
-      ctx.fillStyle = signal;
       ctx.shadowColor = signal;
       ctx.shadowBlur = 8;
       for (const [x, y] of hits) {
+        if (light) {
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          ctx.arc(x, y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.fillStyle = light ? "#a8180f" : signal;
         ctx.beginPath();
-        ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+        ctx.arc(x, y, light ? 2.8 : 2.2, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.shadowBlur = 0;
 
       ctx.beginPath();
       ctx.arc(lens.x, lens.y, R, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgb(${ink} / 0.35)`;
+      ctx.strokeStyle = `rgb(${ink} / ${light ? 0.45 : 0.35})`;
       ctx.stroke();
       ctx.font = `12px ${mono}`;
       ctx.fillStyle = signal;
@@ -170,7 +193,7 @@ export function HeroWave({ className }: { className?: string }) {
 
     readColors();
     resize();
-    lens.x = lens.tx = W * 0.6;
+    lens.x = lens.tx = W * 0.74;
     lens.y = lens.ty = centre(lens.x);
     draw(0);
 
@@ -240,7 +263,7 @@ export function HeroWave({ className }: { className?: string }) {
           type="button"
           onClick={() => setPaused((p) => !p)}
           aria-pressed={paused}
-          className="pointer-events-auto absolute right-4 top-[4.5rem] inline-flex min-h-10 items-center gap-2 rounded-full border bg-card/70 px-3.5 text-[13px] font-medium text-muted-foreground backdrop-blur hover:text-foreground sm:right-8"
+          className="pointer-events-auto absolute bottom-6 right-4 inline-flex min-h-10 items-center gap-2 rounded-full border bg-card/70 px-3.5 text-[13px] font-medium text-muted-foreground backdrop-blur hover:text-foreground sm:right-8"
         >
           {paused ? <Play aria-hidden="true" className="size-3.5" /> : <Pause aria-hidden="true" className="size-3.5" />}
           {paused ? "Play" : "Pause"}

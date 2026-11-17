@@ -56,22 +56,22 @@ export default function LandingPage() {
     <div className="overflow-x-clip">
       {/* Hero */}
       <section aria-labelledby="hero-title" className="relative -mt-[4.25rem] overflow-hidden">
-        <HeroWave className="absolute inset-x-0 top-0 h-[44vh] min-h-[300px] sm:h-[54vh] lg:h-[62vh] lg:max-h-[620px]" />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-8 px-5 pb-16 pt-[max(27vh,210px)] sm:pt-[31vh] lg:grid-cols-[1.45fr_1fr] lg:gap-14 lg:pt-[min(31vh,300px)]">
-          <Reveal>
+        <HeroWave className="absolute inset-0" />
+        <div className="pointer-events-none relative mx-auto flex max-w-6xl flex-col px-5 pb-20 pt-[clamp(8.5rem,20vh,12.5rem)] lg:min-h-[min(100vh,62rem)] lg:pb-28">
+          <Reveal className="pointer-events-auto max-w-[44rem]">
             <p className="kicker">AI triage for IT service desks</p>
-            <h1 id="hero-title" className="text-[clamp(2.9rem,7vw,5.5rem)] font-semibold leading-[0.96] tracking-[-0.05em] text-balance">
-              Every ticket finds <span className="text-signal">its team</span>.
+            <h1 id="hero-title" className="text-[clamp(2.75rem,7vw,5.25rem)] font-semibold leading-[0.95] tracking-[-0.05em]">
+              Every ticket
+              <br />
+              finds <span className="text-signal">its team</span>.
             </h1>
-            <p className="mt-6 text-[clamp(1.15rem,1.8vw,1.4rem)] font-medium leading-snug tracking-[-0.015em]">
+            <p className="mt-6 text-[clamp(1.15rem,1.7vw,1.375rem)] font-medium leading-snug tracking-[-0.015em]">
               Routed when it&apos;s sure. Asked when it isn&apos;t. Never guessed.
             </p>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <p className="max-w-md text-lg leading-relaxed text-muted-foreground">
+            <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
               ResolveIT reads IT tickets the way people write them, in English, Hindi or Hinglish, and decides in about 40 ms. Anything it can&apos;t stand behind goes to a person, with the reason attached.
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap gap-3">
               <Link href="#demo" className="workspace-button primary !min-h-12 !rounded-full !px-6 text-[15px]">
                 Watch it work <ArrowRight aria-hidden="true" className="size-4" />
               </Link>
@@ -79,10 +79,10 @@ export default function LandingPage() {
                 See 30 real examples
               </Link>
             </div>
-            <ul className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[15px] text-muted-foreground">
               <li className="inline-flex items-center gap-2"><Languages aria-hidden="true" className="size-4 text-signal" /> English · <span lang="hi">हिन्दी</span> · Hinglish</li>
               <li className="inline-flex items-center gap-2"><ShieldCheck aria-hidden="true" className="size-4 text-signal" /> No LLM decides</li>
-              <li className="inline-flex items-center gap-2"><Timer aria-hidden="true" className="size-4 text-signal" /> Shadow mode first</li>
+              <li className="inline-flex items-center gap-2"><Gauge aria-hidden="true" className="size-4 text-signal" /> 40 ms per decision</li>
             </ul>
           </Reveal>
         </div>
