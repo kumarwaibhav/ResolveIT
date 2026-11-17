@@ -28,9 +28,11 @@ import {
   Waypoints,
 } from "lucide-react";
 import type { Metadata } from "next";
+
+import { PageHero } from "@/components/landing/page-hero";
 import Link from "next/link";
 
-import { GlassCard, Reveal, ScrollReveal } from "@/components/motion";
+import { GlassCard, ScrollReveal } from "@/components/motion";
 import { GUIDES } from "@/lib/guides";
 
 export const metadata: Metadata = { title: "Docs" };
@@ -125,13 +127,19 @@ function H({ id, n, t, sub }: { id: string; n: string; t: string; sub?: string }
 
 export default function DocsPage() {
   return (
+    <>
+      <PageHero
+        eyebrow="Docs"
+        title="Everything, explained simply."
+        sub="Start here, then dip in where you need to. Each section takes about a minute."
+        stats={[
+          { label: "Sections", value: NAV.length },
+          { label: "Outcomes", value: "Route · Ask · Hand off" },
+          { label: "Teams", value: "12" },
+          { label: "Languages", value: "English · हिन्दी · Hinglish" },
+        ]}
+      />
     <div className="mx-auto max-w-6xl px-5 pt-12">
-      <Reveal className="max-w-3xl">
-        <p className="eyebrow">Docs</p>
-        <h1 className="text-gradient text-[clamp(2.4rem,5.5vw,4rem)] font-bold leading-[1.02] tracking-[-0.05em]">Everything, explained simply.</h1>
-        <p className="mt-5 max-w-xl text-lg text-muted-foreground">Start here, then dip in where you need to. Each section takes about a minute.</p>
-      </Reveal>
-
       <div className="mt-12 grid gap-12 lg:grid-cols-[200px_1fr]">
         <nav aria-label="Docs sections" className="top-24 hidden self-start lg:sticky lg:block">
           <ol className="space-y-1 border-l">
@@ -336,5 +344,6 @@ export default function DocsPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

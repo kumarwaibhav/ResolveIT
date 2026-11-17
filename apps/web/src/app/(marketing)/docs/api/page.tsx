@@ -1,9 +1,10 @@
 import { KeyRound, Lock, ShieldCheck, Timer } from "lucide-react";
 import type { Metadata } from "next";
+
+import { PageHero } from "@/components/landing/page-hero";
 import Link from "next/link";
 
 import { CodeTabs } from "@/components/docs/code-tabs";
-import { Reveal } from "@/components/motion";
 import { enumValues, operations, type Field, type Operation } from "@/lib/api-docs";
 import { cn } from "@/lib/utils";
 
@@ -84,15 +85,19 @@ export default function ApiPage() {
   const ops = operations();
   const byGroup = GROUPS.map((g) => ({ g, ops: ops.filter((o) => (META[`${o.method} ${o.path}`]?.group ?? "System") === g) }));
   return (
+    <>
+      <PageHero
+        eyebrow="API reference"
+        title="The ResolveIT API."
+        sub={`${ops.length} endpoints, one bearer key per person. Everything this app does, your systems and agents can do too.`}
+        stats={[
+          { label: "Endpoints", value: ops.length },
+          { label: "Format", value: "JSON over HTTPS" },
+          { label: "Auth", value: "Bearer key" },
+          { label: "Agents", value: "MCP at /mcp" },
+        ]}
+      />
     <div className="mx-auto max-w-6xl px-5 pt-12">
-      <Reveal className="max-w-3xl">
-        <p className="eyebrow">Developers · API reference</p>
-        <h1 className="text-gradient text-[clamp(2.4rem,5.5vw,4rem)] font-bold leading-[1.02] tracking-[-0.05em]">The ResolveIT API.</h1>
-        <p className="mt-5 max-w-xl text-lg text-muted-foreground">
-          {ops.length} endpoints, one bearer key per person. Everything this app does, your systems and agents can do too.
-        </p>
-      </Reveal>
-
       <div className="mt-12 grid gap-10 lg:grid-cols-[220px_1fr]">
         <nav aria-label="Endpoints" className="top-24 hidden self-start lg:sticky lg:block">
           {byGroup.map(({ g, ops: list }) => (
@@ -232,5 +237,6 @@ export default function ApiPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

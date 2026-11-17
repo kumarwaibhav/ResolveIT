@@ -1,9 +1,10 @@
 import { AlertTriangle, Binary, Cpu, FileLock2, Gauge, Languages, Layers3, Mic, Sparkles, Timer } from "lucide-react";
 import type { Metadata } from "next";
 
-import { GlassCard, NumberTicker, Reveal } from "@/components/motion";
+import { PageHero } from "@/components/landing/page-hero";
+
+import { GlassCard, Reveal } from "@/components/motion";
 import { Donut, StackedBar } from "@/components/viz/charts";
-import { WorkspaceHeading } from "@/components/workspace-heading";
 
 export const metadata: Metadata = { title: "Data & model" };
 
@@ -41,13 +42,19 @@ const MODEL = [
 
 export default function DatasetPage() {
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-5 pt-12">
-      <WorkspaceHeading
-        eyebrow="Learn · Data & model"
+    <>
+      <PageHero
+        eyebrow="Data & model"
         title="What it learned from, and what it proved."
-        description="The model was trained and calibrated on generated tickets in English, Hindi and Hinglish. Here is exactly what that data looks like, how it was split, and how the shipped model performed on tickets it never saw."
+        sub="The model was fine-tuned on 792 seed rows, then calibrated and tested on generated tickets in English, Hindi and Hinglish. Here is exactly what that data looks like, how it was split, and how the shipped model did on tickets it never saw."
+        stats={[
+          { label: "Generated tickets", value: "12,120" },
+          { label: "Frozen test tickets", value: "624" },
+          { label: "Teams", value: "12" },
+          { label: "Languages", value: "English · हिन्दी · Hinglish" },
+        ]}
       />
-
+    <div className="mx-auto max-w-6xl space-y-6 px-5 pt-12">
       <p role="note" className="flex items-start gap-3 rounded-2xl border border-warn/30 bg-warn-surface px-4 py-3 text-sm leading-relaxed text-warn">
         <AlertTriangle aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
         <span>
@@ -56,24 +63,6 @@ export default function DatasetPage() {
         </span>
       </p>
 
-      <ul className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        {[
-          { v: 12120, l: "generated tickets for fitting and testing" },
-          { v: 792, l: "seed rows used to fine-tune the encoder" },
-          { v: 624, l: "frozen test tickets" },
-          { v: 12, l: "teams a ticket can route to" },
-          { v: 3, l: "languages: en · hi · Hinglish" },
-        ].map((x, i) => (
-          <Reveal key={x.l} as="li" delay={i * 0.02} className={i === 0 ? "col-span-2 lg:col-span-1" : undefined}>
-            <GlassCard tilt className="h-full p-5">
-              <span className="block text-3xl font-bold tracking-[-0.04em]">
-                <NumberTicker value={x.v} />
-              </span>
-              <span className="mt-1 block text-xs leading-snug text-muted-foreground">{x.l}</span>
-            </GlassCard>
-          </Reveal>
-        ))}
-      </ul>
 
       <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
         <section className="surface-panel" aria-labelledby="splits">
@@ -171,5 +160,6 @@ export default function DatasetPage() {
         </section>
       </div>
     </div>
+    </>
   );
 }

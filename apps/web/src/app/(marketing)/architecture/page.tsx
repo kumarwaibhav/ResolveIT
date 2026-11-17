@@ -1,9 +1,11 @@
 import { Cloud, Cpu, Database, Globe2, Server } from "lucide-react";
 import type { Metadata } from "next";
+
+import { PageHero } from "@/components/landing/page-hero";
 import Link from "next/link";
 
 import { DecisionEngine, RequestLifecycle, SecurityLayers, SystemMap } from "@/components/architecture/diagrams";
-import { GlassCard, Reveal, ScrollReveal } from "@/components/motion";
+import { GlassCard, ScrollReveal } from "@/components/motion";
 
 export const metadata: Metadata = { title: "Architecture" };
 
@@ -34,12 +36,19 @@ const TOC = [
 
 export default function ArchitecturePage() {
   return (
+    <>
+      <PageHero
+        eyebrow="Architecture"
+        title="Four parts. One path."
+        sub="How a ticket travels, where every decision is made, and the walls that keep each customer's data apart."
+        stats={[
+          { label: "Decision path", value: "Rules + one encoder" },
+          { label: "LLMs in the decision", value: "None" },
+          { label: "Median decision", value: "40 ms on CPU" },
+          { label: "Model", value: "315 MB · signed bundle" },
+        ]}
+      />
     <div className="mx-auto max-w-6xl px-5 pt-12">
-      <Reveal className="max-w-3xl">
-        <p className="eyebrow">Learn · Architecture</p>
-        <h1 className="text-gradient text-[clamp(2.4rem,5.5vw,4rem)] font-bold leading-[1.02] tracking-[-0.05em]">Four parts. One path.</h1>
-        <p className="mt-5 max-w-xl text-lg text-muted-foreground">How a ticket travels, where every decision is made, and the walls that keep each customer&apos;s data apart.</p>
-      </Reveal>
       <nav aria-label="On this page" className="mt-8 flex gap-2 overflow-x-auto pb-1">
         {TOC.map(([id, label], i) => (
           <a key={id} href={`#${id}`} className="glass shrink-0 rounded-full px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">
@@ -90,5 +99,6 @@ export default function ArchitecturePage() {
         </section>
       </div>
     </div>
+    </>
   );
 }

@@ -9,10 +9,9 @@ import { type ReactNode, useEffect, useState } from "react";
 import { MonolithMark, Wordmark } from "@/components/brand/monolith";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { useModal } from "@/lib/use-modal";
-import { cn } from "@/lib/utils";
 
 const LINKS = [
-  { href: "/#how", label: "How it works" },
+  { href: "/#demo", label: "How it works" },
   { href: "/examples", label: "Examples" },
   { href: "/architecture", label: "Architecture" },
   { href: "/docs", label: "Docs" },
@@ -33,12 +32,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
     <div className="relative min-h-dvh">
       <div className="atmosphere" aria-hidden="true" />
       <header inert={open} className="sticky top-0 z-40 px-3 pt-3">
-        <div
-          className={cn(
-            "mx-auto flex h-14 max-w-6xl items-center gap-3 rounded-2xl px-3 transition-all duration-300 sm:px-4",
-            scrolled ? "glass" : "border border-transparent",
-          )}
-        >
+        <div data-scrolled={scrolled} className="nav-pill mx-auto flex h-14 max-w-6xl items-center gap-3 rounded-[20px] pl-4 pr-2 sm:pr-2.5">
           <Link href="/" aria-label="ResolveIT home" className="rounded-lg">
             <Wordmark />
           </Link>
@@ -112,38 +106,54 @@ export function MarketingShell({ children }: { children: ReactNode }) {
         {children}
       </main>
 
-      <footer inert={open} className="mx-auto mt-24 max-w-6xl border-t px-5 pb-12 pt-12">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
-          <div>
-            <Wordmark />
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">Incident intelligence that shows its work. Routes when sure, asks when not, escalates when it matters.</p>
-          </div>
-          {[
-            { h: "Product", l: [["Report a problem", "/intake"], ["Review", "/review"], ["Bounce analyzer", "/bounce"], ["Evaluation", "/evaluation"]] },
-            { h: "Learn", l: [["Docs", "/docs"], ["Examples", "/examples"], ["Architecture", "/architecture"], ["Data & model", "/dataset"]] },
-            { h: "Developers", l: [["API reference", "/docs/api"], ["Agent hand-off (MCP)", "/mcp"], ["Sign in", "/login"]] },
-          ].map((col) => (
-            <div key={col.h}>
-              <h2 className="mono-label">{col.h}</h2>
-              <ul className="mt-2">
-                {col.l.map(([label, href]) => (
-                  <li key={href}>
-                    <Link href={href!} className="inline-flex min-h-11 items-center text-sm text-muted-foreground transition-colors hover:text-foreground">
-                      {label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+      <footer inert={open} className="px-2 pb-2 pt-24 sm:px-3 sm:pb-3">
+        {/* Brand block: fixed Signal Crimson in both themes, white text (4.6:1). */}
+        <div className="relative overflow-hidden rounded-[28px] bg-[#d92d20] px-6 pt-14 text-white sm:rounded-[40px] sm:px-10 lg:px-14 lg:pt-20">
+          <div className="grid gap-12 lg:grid-cols-[1.2fr_2fr]">
+            <div>
+              <h2 className="text-[clamp(2rem,4vw,3rem)] font-semibold leading-[1.02] tracking-[-0.045em]">See your next ticket clearly.</h2>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link href="/intake" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-[#0c0c0e] transition-transform hover:-translate-y-0.5">
+                  Open the app <ArrowRight aria-hidden="true" className="size-4" />
+                </Link>
+                <Link href="/docs" className="inline-flex min-h-11 items-center rounded-full border border-white/50 px-5 text-sm font-semibold text-white transition-colors hover:bg-white/10">
+                  Read the docs
+                </Link>
+              </div>
             </div>
-          ))}
-        </div>
-        <div className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t pt-6 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-2">
-            <MonolithMark size={16} /> © 2026 ResolveIT
-          </span>
-          <span>
-            English · <span lang="hi">हिन्दी</span> · Hinglish
-          </span>
+            <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+              {[
+                { h: "Product", l: [["Report a problem", "/intake"], ["Review", "/review"], ["Bounce analyzer", "/bounce"], ["Evaluation", "/evaluation"]] },
+                { h: "Learn", l: [["Docs", "/docs"], ["Examples", "/examples"], ["Architecture", "/architecture"], ["Data & model", "/dataset"]] },
+                { h: "Developers", l: [["API reference", "/docs/api"], ["Agent hand-off (MCP)", "/mcp"], ["Sign in", "/login"]] },
+              ].map((col) => (
+                <div key={col.h}>
+                  <h2 className="text-sm font-semibold">{col.h}</h2>
+                  <ul className="mt-2">
+                    {col.l.map(([label, href]) => (
+                      <li key={href}>
+                        <Link href={href!} className="inline-flex min-h-10 items-center text-sm text-white underline-offset-4 hover:underline">
+                          {label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p aria-hidden="true" className="mt-14 flex select-none items-center gap-[0.18em] text-[clamp(3rem,13vw,12rem)] font-bold leading-[0.8] tracking-[-0.06em] [--signal:#d92d20]">
+            <MonolithMark size={220} className="h-[0.78em] w-[0.78em] text-white" />
+            <span>
+              Resolve<span className="font-extrabold">IT</span>
+            </span>
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/25 py-6 text-xs">
+            <span>© 2026 ResolveIT</span>
+            <span>
+              English · <span lang="hi">हिन्दी</span> · Hinglish
+            </span>
+          </div>
         </div>
       </footer>
     </div>

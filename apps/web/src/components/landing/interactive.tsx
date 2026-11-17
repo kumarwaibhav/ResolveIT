@@ -1,14 +1,12 @@
 "use client";
 
 import { ArrowRight, Check, Minus, ShieldAlert } from "lucide-react";
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { StageStack } from "@/components/landing/stage-stack";
 import { RingGauge } from "@/components/motion";
-import { STAGES } from "@/components/viz/pipeline";
 import { measure, SLOT_LABEL } from "@/lib/meter";
 import { cn } from "@/lib/utils";
 
@@ -109,47 +107,6 @@ export function TrySandbox() {
           Get the full decision <ArrowRight aria-hidden="true" className="size-4" />
         </Link>
       </div>
-    </div>
-  );
-}
-
-const STORY = [
-  { verb: "Read", line: "Rules find the system, the symptom, who is affected and how urgent it is, and mark the exact words." },
-  { verb: "Protect", line: "Emails, phone numbers and ID numbers are masked before any model sees the text." },
-  { verb: "Understand", line: "A compact multilingual model scores all twelve teams in about 40 milliseconds." },
-  { verb: "Decide", line: "A statistical safety check allows a route only when a wrong one is proven unlikely." },
-  { verb: "Hand off", line: "The ticket goes to a team, gets one optional question, or reaches a person." },
-];
-
-/** Scroll-driven: the isometric stack follows the step you are reading. */
-export function HowItWorks() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState(0);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 60%", "end 60%"] });
-  useMotionValueEvent(scrollYProgress, "change", (v) => setActive(Math.min(STORY.length - 1, Math.max(0, Math.floor(v * STORY.length)))));
-  return (
-    <div ref={ref} className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-      <div className="top-28 hidden self-start lg:sticky lg:block">
-        <StageStack active={active} />
-      </div>
-      <ol className="space-y-6 lg:space-y-[18vh] lg:py-[10vh]">
-        {STORY.map((s, i) => {
-          const Icon = STAGES[i]!.Icon;
-          const on = i === active;
-          return (
-            <li key={s.verb} className={cn("glass rounded-3xl p-6 transition-all duration-500 sm:p-8", on ? "border-signal/40 lg:scale-[1.02]" : "")}>
-              <div className="flex items-center gap-3">
-                <span aria-hidden="true" className={cn("grid size-11 place-items-center rounded-xl transition-colors", on ? "bg-primary text-primary-foreground" : "bg-accent text-signal")}>
-                  <Icon className="size-5" />
-                </span>
-                <span className="font-mono text-xs text-muted-foreground">{String(i + 1).padStart(2, "0")} / 05</span>
-              </div>
-              <h3 className="mt-5 text-3xl font-bold tracking-[-0.04em] sm:text-4xl">{s.verb}.</h3>
-              <p className="mt-3 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">{s.line}</p>
-            </li>
-          );
-        })}
-      </ol>
     </div>
   );
 }

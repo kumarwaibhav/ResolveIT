@@ -47,3 +47,23 @@ export function measure(text: string): MeterResult {
     security: security.test(text),
   };
 }
+
+export interface EvidenceSpan {
+  start: number;
+  end: number;
+  slot: string;
+}
+
+/** Where each rule fired in the text, so a view can mark the exact words. Overlaps keep the first match. */
+export function evidenceSpans(text: string): EvidenceSpan[] {
+  const out: EvidenceSpan[] = [];
+  for (const { slot, re } of compiled) {
+    const m = new RegExp(re.source, "iu").exec(text);
+    if (!m || !m[0].trim()) continue;
+    const start = m.index;
+    const end = start + m[0].length;
+    if (out.some((o) => start < o.end && end > o.start)) continue;
+    out.push({ start, end, slot });
+  }
+  return out.sort((a, b) => a.start - b.start);
+}

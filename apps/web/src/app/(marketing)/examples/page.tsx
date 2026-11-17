@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { ScenarioGallery, type Observed } from "@/components/landing/scenario-gallery";
 import results from "@/generated/scenario-results.json";
-import { Reveal } from "@/components/motion";
+import { PageHero } from "@/components/landing/page-hero";
 
 export const metadata: Metadata = { title: "Examples" };
 
@@ -19,18 +19,24 @@ function trimmed(): { observed: Record<string, Observed>; verifiedAt: string | n
 
 export default function ExamplesPage() {
   const { observed, verifiedAt } = trimmed();
+  const rows = Object.values(observed);
+  const count = (state: string) => rows.filter((r) => r.state === state).length;
   return (
-    <div className="mx-auto max-w-6xl px-5 pt-12">
-      <Reveal className="mx-auto max-w-3xl text-center">
-        <p className="eyebrow">Examples</p>
-        <h1 className="text-gradient text-[clamp(2.4rem,5.5vw,4rem)] font-bold leading-[1.02] tracking-[-0.05em]">Thirty real tickets. Real outcomes.</h1>
-        <p className="mx-auto mt-5 max-w-xl text-lg text-muted-foreground">
-          Written the way people actually report problems, from Slack, email, WhatsApp and phone calls. Each one was sent to the live demo engine.
-        </p>
-      </Reveal>
-      <div className="mt-12">
+    <>
+      <PageHero
+        eyebrow="Examples"
+        title="Thirty real tickets. Real outcomes."
+        sub="Written the way people actually report problems, from Slack, email, WhatsApp and phone calls. Each one was sent to the live demo engine, and this is what came back."
+        stats={[
+          { label: "Routed to a team", value: count("ROUTED") },
+          { label: "Asked one question", value: count("PENDING_CLARIFICATION") },
+          { label: "Handed to a person", value: count("DEFERRED") },
+          { label: "Languages", value: "English · हिन्दी · Hinglish" },
+        ]}
+      />
+      <div className="mx-auto max-w-6xl px-5 pt-14">
         <ScenarioGallery observed={observed} verifiedAt={verifiedAt} />
       </div>
-    </div>
+    </>
   );
 }

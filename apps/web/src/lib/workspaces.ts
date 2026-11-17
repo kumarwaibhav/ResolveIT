@@ -98,3 +98,19 @@ export function draftSplit(group: string) {
   const bucket = hash % 100;
   return bucket < 60 ? "training" : bucket < 75 ? "scaling" : bucket < 90 ? "calibration" : "frozen_test";
 }
+
+/** Plain-language team names for display. Keys are the canonical team ids. */
+export const TEAM_LABEL: Record<string, string> = {
+  Network: "Network",
+  Identity_Access: "Identity & Access",
+  Email_Collab: "Email & Collaboration",
+  Hardware_Endpoint: "Hardware & Endpoint",
+  Software_Licensing: "Software & Licensing",
+  Database: "Database",
+  Cloud_Infra: "Cloud Infrastructure",
+  Security: "Security",
+  ERP_Finance: "ERP & Finance",
+  HR_Systems: "HR Systems",
+  DevOps_CICD: "DevOps & CI/CD",
+  Facilities_AV: "Facilities & AV",
+};
