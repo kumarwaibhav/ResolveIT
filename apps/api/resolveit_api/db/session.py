@@ -1,9 +1,14 @@
 """Database access. `tenant_tx` is the only way application code gets a session.
 
 Each call opens one transaction and sets the tenant with a transaction-scoped
-set_config, so the setting cannot outlive the transaction or leak to another
-client behind PgBouncer transaction pooling. NullPool and disabled statement
-caches keep asyncpg safe behind that pooler.
+set_config, so the setting cannot outlive the transaction, leak to the next user
+of a pooled connection, or leak to another client behind PgBouncer transaction
+pooling. Disabled statement caches keep asyncpg safe behind that pooler.
+
+Connections are pooled and reused. Opening one per transaction (the old NullPool)
+paid a full TCP + TLS + SCRAM handshake every time, about a second against Neon,
+and a ticket makes several transactions. pre_ping replaces connections the server
+dropped (Neon suspends idle compute); recycle retires them before that happens.
 """
 
 from __future__ import annotations
@@ -14,14 +19,16 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import NullPool
 
 
 class Database:
     def __init__(self, url: str) -> None:
         self._engine: AsyncEngine = create_async_engine(
             url,
-            poolclass=NullPool,
+            pool_size=5,
+            max_overflow=10,
+            pool_pre_ping=True,
+            pool_recycle=240,
             connect_args={
                 "statement_cache_size": 0,
                 "prepared_statement_cache_size": 0,
