@@ -1,33 +1,37 @@
+import "@fontsource-variable/plus-jakarta-sans";
+import "@fontsource-variable/jetbrains-mono";
+import "./globals.css";
+
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
-import { SiteNav } from "@/components/site-nav";
-
-import "./globals.css";
+import { Providers } from "@/components/shell/providers";
 
 export const metadata: Metadata = {
-  title: { default: "ResolveIT", template: "%s · ResolveIT" },
-  description: "Report an IT problem and see how it is understood and routed.",
+  title: { default: "ResolveIT · Incident intelligence", template: "%s · ResolveIT" },
+  description: "Describe an IT problem in your own words. ResolveIT shows what it understood, then routes it, asks one question, or hands it to a person.",
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1 };
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#faf8f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#08080a" },
+  ],
+};
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-10 focus:rounded-md focus:bg-card focus:px-3 focus:py-2"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-xl focus:bg-card focus:px-4 focus:py-2 focus:font-semibold focus:shadow-lg"
         >
           Skip to content
         </a>
-        <SiteNav />
-        <div className="workspace-content">
-          <header className="workspace-topbar"><span>ResolveIT AI <span aria-hidden="true">/</span> Workspace</span><span className="topbar-badge">CONTROLLED SANDBOX</span></header>
-          <main id="main" className="workspace-main">{children}</main>
-          <footer className="workspace-footer"><span>Every decision should have evidence.</span><span>English · हिन्दी · Hinglish</span></footer>
-        </div>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

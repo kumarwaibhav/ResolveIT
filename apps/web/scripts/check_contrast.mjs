@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 
 const css = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
-const [light, dark] = css.split(/@media\s*\(prefers-color-scheme:\s*dark\)\s*\{\s*:root/);
+const [light, dark] = css.split(/\n\.dark\s*\{/);
 const tokens = (block) =>
   Object.fromEntries([...block.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6});/g)].map((m) => [m[1], m[2]]));
 const lum = (hex) => {
@@ -14,9 +14,9 @@ const ratio = (a, b) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lu
 const pairs = [
   ["foreground", "background"], ["foreground", "card"], ["muted-foreground", "background"],
   ["muted-foreground", "card"], ["muted-foreground", "muted"], ["primary-foreground", "primary"],
-  ["primary", "card"], ["primary", "background"], ["accent-foreground", "accent"],
+  ["accent-foreground", "accent"],
   ["ok", "ok-surface"], ["warn", "warn-surface"], ["risk", "risk-surface"], ["info", "info-surface"],
-  ["destructive", "card"],
+  ["destructive", "card"], ["signal", "background"], ["signal", "card"],
 ];
 let failed = false;
 for (const [name, block] of [["light", light], ["dark", dark]]) {

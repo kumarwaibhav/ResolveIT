@@ -1,15 +1,74 @@
 "use client";
+
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 
-const STAGES = [
-  { name: "Raw evidence", title: "Keep the original meaning", detail: "Deterministic rules read the original report first. Protected error codes survive masking. Evidence spans refer to raw Unicode code points." },
-  { name: "PII shield", title: "Minimize what the model sees", detail: "Normalize and mask detected identifiers before neural processing. Offset maps connect normalized and masked spans back to source evidence. Raw reports are encrypted separately." },
-  { name: "Model bundle", title: "Version the whole decision", detail: "A deployable bundle binds model, tokenizer, class order, temperature, thresholds, costs and policy. Synthetic smoke outputs do not establish real-world accuracy." },
-  { name: "Risk gate", title: "Know when to stop", detail: "Conformal support, certified queue risk, critical slots and expected cost control routing. Empty sets defer. Real tenants without sufficient human evidence stay in shadow mode." },
-  { name: "Human / agent", title: "A considered handoff", detail: "Ask at most one question or defer to a person. Enterprise agent assertions need source citations and signed request state. Standard MCP clients use negotiated lifecycle and tools." },
-];
+import { STAGES } from "@/components/viz/pipeline";
+import { cn } from "@/lib/utils";
+
 export function ArchitectureExplorer() {
-  const [selected, setSelected] = useState(0);
+  const [selected, setSelected] = useState(3);
+  const reduce = useReducedMotion();
   const current = STAGES[selected]!;
-  return <section className="surface-panel"><p className="eyebrow">SYSTEM EXPLORER</p><h2 className="panel-title">Trace the decision path</h2><div className="architecture-track" role="group" aria-label="Explore pipeline stage">{STAGES.map((stage, idx) => <button key={stage.name} onClick={() => setSelected(idx)} aria-pressed={selected === idx}><span>{String(idx + 1).padStart(2, "0")}</span><strong>{stage.name}</strong><svg viewBox="0 0 80 22" aria-hidden="true"><path d="M0 11h65m-8-6 8 6-8 6" /></svg></button>)}</div><div className="architecture-description" aria-live="polite"><h3>{current.title}</h3><p className="panel-copy">{current.detail}</p></div></section>;
+  return (
+    <section className="surface-panel overflow-hidden">
+      <p className="eyebrow">System explorer</p>
+      <h2 className="panel-title">Trace the decision path</h2>
+      <p className="panel-copy">Every ticket passes the same five stages. Select one to see what it guarantees.</p>
+      <div className="relative mt-6" role="group" aria-label="Explore pipeline stage">
+        <svg aria-hidden="true" className="pointer-events-none absolute left-[10%] right-[10%] top-[34px] hidden h-1 w-[80%] sm:block" viewBox="0 0 100 2" preserveAspectRatio="none">
+          <line x1="0" y1="1" x2="100" y2="1" stroke="var(--border)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+          <motion.line
+            x1="0"
+            y1="1"
+            y2="1"
+            stroke="var(--signal)"
+            strokeWidth="2"
+            vectorEffect="non-scaling-stroke"
+            initial={false}
+            animate={{ x2: (selected / (STAGES.length - 1)) * 100 }}
+            transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 200, damping: 30 }}
+          />
+        </svg>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          {STAGES.map((stage, idx) => {
+            const on = selected === idx;
+            const Icon = stage.Icon;
+            return (
+              <button
+                key={stage.name}
+                type="button"
+                onClick={() => setSelected(idx)}
+                aria-pressed={on}
+                className={cn(
+                  "group relative flex min-h-[7.5rem] flex-col items-center gap-3 rounded-2xl border bg-card/60 p-4 text-center transition-all hover:-translate-y-0.5",
+                  on && "border-signal/60 bg-card shadow-[0_12px_32px_-12px_var(--glow)]",
+                )}
+              >
+                <span className={cn("relative z-10 grid size-11 place-items-center rounded-xl border bg-card transition-colors", on && "border-transparent bg-primary text-primary-foreground")}>
+                  <Icon aria-hidden="true" className="size-5" />
+                </span>
+                <span className="font-mono text-[10px] text-muted-foreground">{String(idx + 1).padStart(2, "0")}</span>
+                <strong className="-mt-2 text-sm font-semibold">{stage.name}</strong>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="mt-6 border-t pt-5" aria-live="polite">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={current.name}
+            initial={reduce ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduce ? { opacity: 1 } : { opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+          >
+            <h3 className="text-lg font-bold tracking-[-0.02em]">{current.title}</h3>
+            <p className="panel-copy mt-1 max-w-3xl">{current.detail}</p>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </section>
+  );
 }

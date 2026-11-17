@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -18,10 +19,10 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
   const view = (await res.json()) as IncidentView;
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <p className="text-sm">
-        <Link href="/" className="text-signal underline underline-offset-4">Report another problem</Link>
-      </p>
-      <h1 className="sr-only">Incident</h1>
+      <Link href="/" className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground">
+        <ArrowLeft aria-hidden="true" className="size-4" /> Report another problem
+      </Link>
+      <h1 className="text-3xl font-bold tracking-[-0.04em]">Incident record</h1>
       {view.is_synthetic_tenant ? <SyntheticBanner /> : null}
       <IncidentPanel view={view} />
     </div>

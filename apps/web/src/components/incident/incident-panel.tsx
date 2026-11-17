@@ -1,12 +1,13 @@
 "use client";
 
+import { ShieldAlert } from "lucide-react";
 import { useState } from "react";
 
 import { DecisionSummary } from "@/components/incident/decision-summary";
 import { EvidenceText } from "@/components/incident/evidence-text";
-import { FrameTable } from "@/components/incident/frame-table";
+import { FrameTable, SlotGrid } from "@/components/incident/frame-table";
 import { QuestionCard } from "@/components/incident/question-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GlassCard, Reveal } from "@/components/motion";
 import type { IncidentView } from "@/lib/types";
 
 interface Props {
@@ -21,37 +22,38 @@ export function IncidentPanel({ view, busy = false, onAnswer }: Props) {
   return (
     <div className="space-y-4">
       {view.security_trigger ? (
-        <p role="status" className="rounded-md bg-risk-surface px-3 py-2 text-sm font-medium text-risk">
+        <p role="status" className="flex items-center gap-2.5 rounded-2xl border border-risk/30 bg-risk-surface px-4 py-3 text-sm font-semibold text-risk">
+          <ShieldAlert aria-hidden="true" className="size-4 shrink-0" />
           Possible security incident. Flagged for the Security team.
         </p>
       ) : null}
-      <Card>
-        <CardContent className="space-y-4">
+      <Reveal>
+        <GlassCard className="space-y-6 p-5 sm:p-6">
           <DecisionSummary view={view} />
           {view.question && onAnswer ? <QuestionCard question={view.question} busy={busy} onAnswer={onAnswer} /> : null}
-        </CardContent>
-      </Card>
+        </GlassCard>
+      </Reveal>
       {view.text ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">What the message says</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <Reveal delay={0.05}>
+          <section aria-labelledby="evidence-title" className="glass rounded-2xl p-5 sm:p-6">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h3 id="evidence-title" className="mono-label">What the message says</h3>
+              <span className="text-xs text-muted-foreground">Underlined = evidence</span>
+            </div>
             <EvidenceText text={view.text} frame={frame} activeSlot={activeSlot} onActivate={setActiveSlot} />
-          </CardContent>
-        </Card>
+          </section>
+        </Reveal>
       ) : null}
       {frame.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Details</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <Reveal delay={0.1}>
+          <section aria-labelledby="frame-title" className="glass space-y-5 rounded-2xl p-5 sm:p-6">
+            <h3 id="frame-title" className="mono-label">Incident frame · 11 details</h3>
+            <SlotGrid frame={frame} activeSlot={activeSlot} onActivate={setActiveSlot} />
             <FrameTable frame={frame} decision={view.decision ?? null} activeSlot={activeSlot} onActivate={setActiveSlot} />
-          </CardContent>
-        </Card>
+          </section>
+        </Reveal>
       ) : null}
-      <p className="font-mono text-xs text-muted-foreground">
+      <p className="break-all font-mono text-[11px] text-muted-foreground">
         <span data-incident-id={view.id}>Incident {view.id}</span>
         {view.decision ? ` · bundle ${view.decision.bundle_id}` : ""}
       </p>
