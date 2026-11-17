@@ -3,8 +3,10 @@
 Live:
 - Web: https://resolveit-one.vercel.app (Vercel Hobby, functions in `bom1` Mumbai)
 - API: https://kumarwaibhav--resolveit-api-web.ap-south.modal.run (Modal Starter: container in
-  `ap-southeast`, HTTPS ingress `ap-south`; scales to zero; worker sweep every 5 min)
-- Database: Neon Postgres 16, AWS Singapore (direct endpoint, TLS)
+  `au`, HTTPS ingress `ap-south`; scales to zero; worker sweep hourly)
+- Database: Neon Postgres 16, AWS Sydney `ap-southeast-2` (direct endpoint, TLS), next to the API container.
+  Modal's `ap-southeast` can place containers in Sydney, which left a Singapore database ~95 ms
+  away per query; keep the container region and the database in the same city.
 
 | Piece | Why this host |
 |---|---|

@@ -45,8 +45,10 @@ app = modal.App("resolveit-api", image=image)
 secret = modal.Secret.from_name("resolveit-prod")
 
 
-# Same region as the Neon database (AWS Singapore): each ticket makes several DB round trips.
-REGION = "ap-southeast"
+# Same place as the Neon database (AWS Sydney, ap-southeast-2): each ticket makes dozens of DB
+# round trips. Modal's broad "ap-southeast" also places containers in Sydney, which put a
+# Singapore database ~95 ms away per query (8-10 s per ticket); "au" keeps both in Australia.
+REGION = "au"
 
 
 @app.function(
