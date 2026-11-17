@@ -22,7 +22,7 @@ import { TriageDemo } from "@/components/landing/triage-demo";
 import { Reveal, ScrollReveal } from "@/components/motion";
 
 export const metadata: Metadata = {
-  title: { absolute: "ResolveIT · AI ticket triage for IT service desks" },
+  title: { absolute: "ResolveIT · Every ticket finds its team" },
   description: "ResolveIT reads IT tickets the way people write them and sends each one to the right team. When it is not sure, it asks one question or hands the ticket to a person.",
 };
 
@@ -56,18 +56,20 @@ export default function LandingPage() {
     <div className="overflow-x-clip">
       {/* Hero */}
       <section aria-labelledby="hero-title" className="relative -mt-[4.25rem] overflow-hidden">
-        <HeroWave className="absolute inset-x-0 top-0 h-[30vh] min-h-[230px] sm:h-[34vh] lg:h-[38vh] lg:max-h-[380px]" />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-8 px-5 pb-16 pt-[max(29vh,220px)] sm:pt-[33vh] lg:grid-cols-[1.5fr_1fr] lg:gap-14 lg:pt-[min(36vh,360px)]">
+        <HeroWave className="absolute inset-x-0 top-0 h-[44vh] min-h-[300px] sm:h-[54vh] lg:h-[62vh] lg:max-h-[620px]" />
+        <div className="relative mx-auto grid max-w-6xl items-center gap-8 px-5 pb-16 pt-[max(27vh,210px)] sm:pt-[31vh] lg:grid-cols-[1.45fr_1fr] lg:gap-14 lg:pt-[min(31vh,300px)]">
           <Reveal>
-            <p className="kicker">AI ticket triage for IT service desks</p>
-            <h1 id="hero-title" className="text-[clamp(2.75rem,6.6vw,5rem)] font-semibold leading-[0.98] tracking-[-0.055em] text-balance">
-              Every IT ticket, to the <span className="text-signal">right team</span>.
+            <p className="kicker">AI triage for IT service desks</p>
+            <h1 id="hero-title" className="text-[clamp(2.9rem,7vw,5.5rem)] font-semibold leading-[0.96] tracking-[-0.05em] text-balance">
+              Every ticket finds <span className="text-signal">its team</span>.
             </h1>
+            <p className="mt-6 text-[clamp(1.15rem,1.8vw,1.4rem)] font-medium leading-snug tracking-[-0.015em]">
+              Routed when it&apos;s sure. Asked when it isn&apos;t. Never guessed.
+            </p>
           </Reveal>
           <Reveal delay={0.08}>
             <p className="max-w-md text-lg leading-relaxed text-muted-foreground">
-              ResolveIT reads tickets the way people write them, in English, Hindi or Hinglish, and decides where each one goes in about 40 ms. Not sure? It asks one question or hands the ticket to a person.
-              <span className="text-foreground"> It never guesses.</span>
+              ResolveIT reads IT tickets the way people write them, in English, Hindi or Hinglish, and decides in about 40 ms. Anything it can&apos;t stand behind goes to a person, with the reason attached.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link href="#demo" className="workspace-button primary !min-h-12 !rounded-full !px-6 text-[15px]">
@@ -80,7 +82,7 @@ export default function LandingPage() {
             <ul className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
               <li className="inline-flex items-center gap-2"><Languages aria-hidden="true" className="size-4 text-signal" /> English · <span lang="hi">हिन्दी</span> · Hinglish</li>
               <li className="inline-flex items-center gap-2"><ShieldCheck aria-hidden="true" className="size-4 text-signal" /> No LLM decides</li>
-              <li className="inline-flex items-center gap-2"><Gauge aria-hidden="true" className="size-4 text-signal" /> 40 ms per decision</li>
+              <li className="inline-flex items-center gap-2"><Timer aria-hidden="true" className="size-4 text-signal" /> Shadow mode first</li>
             </ul>
           </Reveal>
         </div>

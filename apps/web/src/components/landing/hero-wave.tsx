@@ -7,14 +7,14 @@ import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
 /**
- * A narrow, braided stream of tickets drifting left to right like floating bubbles.
- * The ring is ResolveIT reading: it follows the pointer, and any ticket inside it that
- * would be an incident turns crimson and gets a marker. With no pointer it drifts on its own.
+ * A slow, wide river of tickets drifting left to right like floating bubbles.
+ * The ring is ResolveIT reading: it follows the pointer, and tickets inside it that it
+ * would hand to a person pop crimson. With no pointer it drifts along the river on its own.
  * Plain 2D canvas, paused off-screen and in hidden tabs, static under reduced motion.
  */
 interface Dot {
   u: number; // position along the stream, 0..1.1
-  s: number; // strand
+  s: number; // unused, kept for shape
   v: number; // offset inside the strand
   z: number; // depth, 0 far .. 1 near
   p: number; // phase
@@ -22,13 +22,7 @@ interface Dot {
   incident: boolean;
 }
 
-const STRANDS = [
-  { amp: 0.32, k: 1.6, w: 0.21, off: 0 },
-  { amp: 0.42, k: 2.3, w: -0.15, off: 1.7 },
-  { amp: 0.26, k: 3.1, w: 0.27, off: 3.4 },
-  { amp: 0.5, k: 1.1, w: 0.11, off: 5.0 },
-];
-const SPEED = 0.0075; // stream widths per second, before per-dot variation
+const SPEED = 0.0065; // stream widths per second: a crossing takes about two and a half minutes
 
 export function HeroWave({ className }: { className?: string }) {
   const host = useRef<HTMLDivElement>(null);
@@ -55,7 +49,7 @@ export function HeroWave({ className }: { className?: string }) {
     let visible = true;
     let raf = 0;
     let last = performance.now();
-    let t = 24;
+    let t = 18;
     // Lens: where it is, where it is heading, and whether a pointer is steering it.
     const lens = { x: 0, y: 0, tx: 0, ty: 0, steer: false, idle: 0 };
 
@@ -78,44 +72,32 @@ export function HeroWave({ className }: { className?: string }) {
       el.style.width = `${W}px`;
       el.style.height = `${H}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const n = Math.round(Math.min(3000, Math.max(1100, W * (coarse ? 1.6 : 2.1))));
+      const n = Math.round(Math.min(2600, Math.max(900, W * (coarse ? 1.1 : 1.7))));
       if (dots.length !== n) {
         dots = Array.from({ length: n }, () => {
-          const a = Math.random() + Math.random() + Math.random() - 1.5; // soft bell, -1.5..1.5
+          const a = Math.random() + Math.random() + Math.random() + Math.random() - 2; // soft bell, -2..2
           return {
             u: Math.random() * 1.1,
-            s: Math.floor(Math.random() * STRANDS.length),
-            v: a / 1.5,
-            z: Math.random() ** 1.5,
+            s: 0,
+            v: a / 2,
+            z: Math.random() ** 1.6,
             p: Math.random() * Math.PI * 2,
-            k: 0.55 + Math.random() * 0.8,
-            incident: Math.random() < 0.06,
+            k: 0.55 + 0.45 * Math.random(),
+            incident: Math.random() < 0.05,
           };
         });
       }
     };
 
-    // Centre line of the whole stream: tapered at the left, lifting gently to the right, slowly breathing.
-    const base = (x: number) => {
-      const f = x / W;
-      return H * (0.56 - 0.1 * f) + H * 0.2 * Math.sin(f * 5.4 + t * 0.16) + H * 0.07 * Math.sin(f * 12.5 - t * 0.12 + 1.3);
-    };
-    // Width of the stream: thin at both ends, widest a little right of centre. Narrow overall.
-    const width = (x: number) => {
-      const f = Math.min(1, Math.max(0, x / W));
-      return H * (0.07 + 0.13 * (0.55 + 0.45 * Math.sin(f * 7 - t * 0.1)) * Math.sin(Math.PI * Math.min(1, f + 0.08)) ** 0.8);
-    };
+    // The river: low on the left, rising to the right, swaying slowly. Wide and soft, like the first version.
+    const centre = (x: number) => H * (0.6 - 0.36 * (x / W)) + H * 0.07 * Math.sin((x / W) * Math.PI * 2.1 + t * 0.21);
+    const thick = (x: number) => H * (0.05 + 0.13 * Math.sin(Math.PI * Math.min(1, Math.max(0, x / W)) * 0.95 + 0.15));
 
     const place = (d: Dot) => {
-      // Non-uniform flow: speed swells and eases along the stream, so dots bunch and spread like bubbles.
-      const u = d.u + t * SPEED * d.k * (1 + 0.35 * Math.sin(d.u * 9 + t * 0.2));
+      const u = d.u + t * SPEED * d.k;
       const uu = (((u % 1.1) + 1.1) % 1.1) - 0.05;
       const x = uu * W;
-      const st = STRANDS[d.s]!;
-      const f = x / W;
-      const strand = Math.sin(f * Math.PI * 2 * st.k + t * st.w + st.off) * st.amp;
-      const w = width(x);
-      const y = base(x) + (strand + d.v * 0.55) * w + Math.sin(t * 0.6 + d.p) * (1.5 + 2.5 * d.z);
+      const y = centre(x) + d.v * thick(x) + Math.sin(t * 0.35 + d.p) * (2 + 3 * d.z);
       return { x, y, uu };
     };
 
@@ -126,17 +108,17 @@ export function HeroWave({ className }: { className?: string }) {
       if (!lens.steer) {
         lens.idle += dt;
         lens.tx = W * (0.6 + 0.12 * Math.sin(lens.idle * 0.12));
-        lens.ty = base(lens.tx);
+        lens.ty = centre(lens.tx);
       }
       const ease = 1 - Math.exp(-dt * (lens.steer ? 9 : 2));
       lens.x += (lens.tx - lens.x) * ease;
       lens.y += (lens.ty - lens.y) * ease;
-      const R = Math.max(50, Math.min(92, H * 0.27));
+      const R = Math.max(56, Math.min(96, Math.min(W, H) * 0.15));
 
       const hits: [number, number][] = [];
       for (const d of dots) {
         const { x, y, uu } = place(d);
-        const edge = Math.min(1, Math.max(0, Math.min(uu + 0.05, 1.05 - uu) * 7));
+        const edge = Math.min(1, Math.max(0, Math.min(uu + 0.05, 1.05 - uu) * 8));
         const dx = x - lens.x;
         const dy = y - lens.y;
         const inLens = dx * dx + dy * dy < R * R;
@@ -144,24 +126,22 @@ export function HeroWave({ className }: { className?: string }) {
           hits.push([x, y]);
           continue;
         }
-        const a = (0.14 + 0.6 * d.z) * (1 - 0.35 * Math.abs(d.v)) * edge;
-        const s = 0.7 + d.z * 1.3;
-        ctx.fillStyle = `rgb(${ink} / ${Math.min(0.92, inLens ? a * 1.6 + 0.1 : a)})`;
-        ctx.beginPath();
-        ctx.arc(x, y, s / 2, 0, Math.PI * 2);
-        ctx.fill();
+        const a = (0.12 + 0.56 * d.z) * (1 - 0.5 * Math.abs(d.v)) * edge;
+        const s = 0.7 + d.z * 1.4;
+        ctx.fillStyle = `rgb(${ink} / ${Math.min(0.9, inLens ? a * 1.6 + 0.08 : a)})`;
+        ctx.fillRect(x - s / 2, y - s / 2, s, s);
       }
 
-      // Incidents inside the lens: crimson, each with a small marker ring.
+      // Tickets the lens would hand to a person simply pop crimson.
       ctx.fillStyle = signal;
-      ctx.strokeStyle = signal;
-      ctx.lineWidth = 1;
+      ctx.shadowColor = signal;
+      ctx.shadowBlur = 8;
       for (const [x, y] of hits) {
-        ctx.fillRect(x - 1.75, y - 1.75, 3.5, 3.5);
-        ctx.globalAlpha = 0.55;
-        ctx.strokeRect(x - 4.5, y - 4.5, 9, 9);
-        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+        ctx.fill();
       }
+      ctx.shadowBlur = 0;
 
       ctx.beginPath();
       ctx.arc(lens.x, lens.y, R, 0, Math.PI * 2);
@@ -169,7 +149,7 @@ export function HeroWave({ className }: { className?: string }) {
       ctx.stroke();
       ctx.font = `12px ${mono}`;
       ctx.fillStyle = signal;
-      const label = `${hits.length} ${hits.length === 1 ? "incident" : "incidents"} found`;
+      const label = `${hits.length} flagged for a person`;
       const tw = ctx.measureText(label).width;
       const lx = lens.x + R + 12 + tw < W - 8 ? lens.x + R + 12 : lens.x - R - 12 - tw;
       ctx.fillText(label, lx, lens.y + 4);
@@ -191,7 +171,7 @@ export function HeroWave({ className }: { className?: string }) {
     readColors();
     resize();
     lens.x = lens.tx = W * 0.6;
-    lens.y = lens.ty = base(lens.x);
+    lens.y = lens.ty = centre(lens.x);
     draw(0);
 
     const onMove = (e: PointerEvent) => {

@@ -1,4 +1,4 @@
-import "@fontsource-variable/plus-jakarta-sans";
+import "@fontsource-variable/geist";
 import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 
@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
 import { Providers } from "@/components/shell/providers";
 
 export const metadata: Metadata = {
-  title: { default: "ResolveIT · AI ticket triage for IT service desks", template: "%s · ResolveIT" },
+  title: { default: "ResolveIT · Every ticket finds its team", template: "%s · ResolveIT" },
   description: "Describe an IT problem in your own words. ResolveIT shows what it understood, then routes it, asks one question, or hands it to a person.",
 };
 
