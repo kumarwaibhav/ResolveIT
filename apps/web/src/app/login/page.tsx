@@ -34,7 +34,9 @@ export default function LoginPage() {
     <div className="relative min-h-dvh">
       <div className="atmosphere" aria-hidden="true" />
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
-        <Wordmark />
+        <Link href="/" aria-label="ResolveIT home" className="rounded-lg">
+          <Wordmark />
+        </Link>
         <ThemeToggle />
       </header>
       <main id="main" tabIndex={-1} className="mx-auto grid outline-none max-w-6xl items-center gap-10 px-5 pb-16 pt-4 lg:grid-cols-[1.1fr_1fr] lg:pt-10">

@@ -9,6 +9,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import { MonolithMark, Wordmark } from "@/components/brand/monolith";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { useModal } from "@/lib/use-modal";
+import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/#demo", label: "How it works" },
@@ -32,7 +33,12 @@ export function MarketingShell({ children }: { children: ReactNode }) {
     <div className="relative min-h-dvh">
       <div className="atmosphere" aria-hidden="true" />
       <header inert={open} className="sticky top-0 z-40 px-3 pt-3">
-        <div data-scrolled={scrolled} className="nav-pill mx-auto flex h-14 max-w-6xl items-center gap-3 rounded-[20px] pl-4 pr-2 sm:pr-2.5">
+        <div
+          className={cn(
+            "mx-auto flex h-14 max-w-6xl items-center gap-3 rounded-2xl px-3 transition-all duration-300 sm:px-4",
+            scrolled ? "glass" : "border border-transparent",
+          )}
+        >
           <Link href="/" aria-label="ResolveIT home" className="rounded-lg">
             <Wordmark />
           </Link>
@@ -85,7 +91,9 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             transition={{ duration: 0.18 }}
           >
             <div className="flex items-center justify-between">
-              <Wordmark />
+              <Link href="/" aria-label="ResolveIT home" onClick={() => setOpen(false)} className="rounded-lg">
+                <Wordmark />
+              </Link>
               <button type="button" aria-label="Close menu" onClick={() => setOpen(false)} className="grid size-11 place-items-center rounded-xl border bg-card">
                 <X aria-hidden="true" className="size-4" />
               </button>

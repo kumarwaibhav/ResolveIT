@@ -14,7 +14,7 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { HeroScene } from "@/components/landing/hero-scene";
+import { HeroWave } from "@/components/landing/hero-wave";
 import { TrySandbox } from "@/components/landing/interactive";
 import { Channels, ProductSteps, ProofCards, ReviewLoop } from "@/components/landing/sections";
 import { InkSheet, SplitHead } from "@/components/landing/sheets";
@@ -55,42 +55,46 @@ export default function LandingPage() {
   return (
     <div className="overflow-x-clip">
       {/* Hero */}
-      <section aria-labelledby="hero-title" className="relative mx-auto grid max-w-6xl items-center gap-6 px-5 pb-10 pt-10 lg:grid-cols-[1.05fr_1fr] lg:pt-16">
-        <Reveal>
-          <p className="eyebrow inline-flex items-center gap-2">
-            <span aria-hidden="true" className="h-px w-6 bg-signal" /> Incident intelligence for IT teams
-          </p>
-          <h1 id="hero-title" className="text-[clamp(2.75rem,7vw,5.25rem)] font-semibold leading-[0.95] tracking-[-0.055em]">
-            Ambiguity in.
-            <br />
-            One <span className="text-signal">calibrated</span>
-            <br />
-            path out.
-          </h1>
-          <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground">
-            ResolveIT reads IT problems in the words people actually use. Then it routes the ticket, asks one question, or hands it to a person.
-            <span className="text-foreground"> Never a guess.</span>
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="#demo" className="workspace-button primary !min-h-12 !rounded-2xl !px-6 text-[15px]">
-              Watch it work <ArrowRight aria-hidden="true" className="size-4" />
-            </Link>
-            <Link href="/examples" className="workspace-button !min-h-12 !rounded-2xl !px-6 text-[15px]">
-              See 30 real examples
-            </Link>
-          </div>
-          <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-            <li className="inline-flex items-center gap-2"><Languages aria-hidden="true" className="size-4 text-signal" /> English · <span lang="hi">हिन्दी</span> · Hinglish</li>
-            <li className="inline-flex items-center gap-2"><ShieldCheck aria-hidden="true" className="size-4 text-signal" /> No LLM decides</li>
-            <li className="inline-flex items-center gap-2"><Gauge aria-hidden="true" className="size-4 text-signal" /> 40 ms per decision</li>
-          </ul>
-        </Reveal>
-        <HeroScene className="h-[340px] sm:h-[460px] lg:h-[560px]" />
+      <section aria-labelledby="hero-title" className="relative -mt-[4.25rem] overflow-hidden">
+        <HeroWave className="absolute inset-x-0 top-0 h-[52vh] min-h-[340px] sm:h-[66vh] lg:h-[74vh] lg:max-h-[720px]" />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-[38vh] h-[36vh] bg-gradient-to-b from-transparent to-background sm:top-[50vh] lg:top-[min(56vh,560px)]" />
+        <div className="relative mx-auto grid max-w-6xl items-end gap-8 px-5 pb-16 pt-[38vh] sm:pt-[44vh] lg:grid-cols-[1.55fr_1fr] lg:gap-14 lg:pt-[min(48vh,470px)]">
+          <Reveal>
+            <p className="eyebrow inline-flex items-center gap-2">
+              <span aria-hidden="true" className="h-px w-6 bg-signal" /> Incident intelligence for IT teams
+            </p>
+            <h1 id="hero-title" className="text-[clamp(2.75rem,7vw,5rem)] font-semibold leading-[0.95] tracking-[-0.055em]">
+              Ambiguity in.
+              <br />
+              One <span className="text-signal">calibrated</span>
+              <br />
+              path out.
+            </h1>
+          </Reveal>
+          <Reveal delay={0.08}>
+            <p className="max-w-md text-lg leading-relaxed text-muted-foreground">
+              ResolveIT reads IT problems in the words people actually use. Then it routes the ticket, asks one question, or hands it to a person.
+              <span className="text-foreground"> Never a guess.</span>
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link href="#demo" className="workspace-button primary !min-h-12 !rounded-full !px-6 text-[15px]">
+                Watch it work <ArrowRight aria-hidden="true" className="size-4" />
+              </Link>
+              <Link href="/examples" className="workspace-button !min-h-12 !rounded-full !px-6 text-[15px]">
+                See 30 real examples
+              </Link>
+            </div>
+            <ul className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+              <li className="inline-flex items-center gap-2"><Languages aria-hidden="true" className="size-4 text-signal" /> English · <span lang="hi">हिन्दी</span> · Hinglish</li>
+              <li className="inline-flex items-center gap-2"><ShieldCheck aria-hidden="true" className="size-4 text-signal" /> No LLM decides</li>
+              <li className="inline-flex items-center gap-2"><Gauge aria-hidden="true" className="size-4 text-signal" /> 40 ms per decision</li>
+            </ul>
+          </Reveal>
+        </div>
       </section>
 
-
       {/* Demo */}
-      <InkSheet id="demo" labelledBy="demo-title" className="mt-6">
+      <InkSheet id="demo" labelledBy="demo-title">
         <SplitHead
           id="demo-title"
           eyebrow="Watch it work"
