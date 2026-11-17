@@ -1,8 +1,9 @@
 "use client";
 
-import { AnimatePresence, motion, useInView, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useInView } from "motion/react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { Pause, Play } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -25,63 +26,88 @@ const EDGES = [
 ];
 
 export function SystemMap() {
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   const [sel, setSel] = useState<string>("api");
+  const [live, setLive] = useState(true);
   const reduce = useReducedMotion();
+  const moving = live && !reduce;
   const node = NODES.find((n) => n.id === sel)!;
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-      <div className="min-w-0 overflow-x-auto rounded-2xl border bg-card/60 p-2" role="region" tabIndex={0} aria-label="System map, scrollable">
-        <svg viewBox="0 0 1020 420" className="h-auto w-full min-w-[640px]" role="group" aria-label="System map. Select a component to read about it.">
-          <defs>
-            <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
-              <circle cx="1" cy="1" r="1" fill="var(--grid-dot)" />
-            </pattern>
-          </defs>
-          <rect width="1020" height="420" fill="url(#dots)" rx="16" />
-          {EDGES.map((e, i) => (
-            <g key={e.id}>
-              <motion.path d={e.d} fill="none" stroke="var(--border)" strokeWidth="2" initial={reduce ? false : { pathLength: 0 }} whileInView={{ pathLength: 1 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: i * 0.12 }} />
-              <path id={e.id} d={e.d} fill="none" stroke={e.hot ? "var(--signal)" : "var(--muted-foreground)"} strokeOpacity={0.6} strokeWidth="2" className="flow-dash" />
-              {!reduce ? (
-                <circle r="4.5" fill={e.hot ? "var(--signal)" : "var(--foreground)"}>
-                  <animateMotion dur={`${2.2 + i * 0.3}s`} repeatCount="indefinite" rotate="auto">
-                    <mpath href={`#${e.id}`} />
-                  </animateMotion>
-                </circle>
-              ) : null}
-            </g>
-          ))}
-          {NODES.map((n) => {
-            const on = n.id === sel;
-            return (
-              <g
-                key={n.id}
-                role="button"
-                tabIndex={0}
-                aria-pressed={on}
-                aria-label={`${n.t}: ${n.s}`}
-                onClick={() => setSel(n.id)}
-                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setSel(n.id))}
-                className="cursor-pointer outline-none [&:focus-visible>rect]:stroke-[var(--ring)]"
-              >
-                <rect x={n.x} y={n.y} width={n.w} height="70" rx="16" fill="var(--card)" stroke={on ? "var(--signal)" : "var(--border)"} strokeWidth={on ? 2 : 1.2} style={{ filter: on ? "drop-shadow(0 10px 24px var(--glow))" : undefined }} />
-                <text x={n.x + 18} y={n.y + 31} fontSize="16" fontWeight="700" fill="var(--foreground)">{n.t}</text>
-                <text x={n.x + 18} y={n.y + 51} fontSize="12" fill="var(--muted-foreground)">{n.s}</text>
+      <div className="min-w-0 space-y-3">
+        <div className="overflow-x-auto rounded-2xl border bg-card/60 p-2" role="region" tabIndex={0} aria-label="System map, scrollable">
+          <svg viewBox="0 0 1020 420" className="h-auto w-full min-w-[640px]" role="group" aria-label="System map. Select a component to read about it.">
+            <defs>
+              <pattern id={`${uid}dots`} width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="1" cy="1" r="1" fill="var(--grid-dot)" />
+              </pattern>
+              <marker id={`${uid}arrow`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0 0L10 5L0 10z" fill="var(--signal)" />
+              </marker>
+            </defs>
+            <rect width="1020" height="420" fill={`url(#${uid}dots)`} rx="16" />
+            {EDGES.map((e, i) => (
+              <g key={e.id}>
+                {e.hot ? (
+                  <path id={`${uid}${e.id}`} d={e.d} fill="none" stroke="var(--signal)" strokeWidth="3" markerEnd={`url(#${uid}arrow)`} />
+                ) : (
+                  <path id={`${uid}${e.id}`} d={e.d} fill="none" stroke="var(--muted-foreground)" strokeWidth="2" strokeDasharray="6 7" className={moving ? "flow-dash" : undefined} />
+                )}
+                {moving ? (
+                  <circle r="5" fill={e.hot ? "var(--signal)" : "var(--foreground)"}>
+                    <animateMotion dur={`${2.2 + i * 0.3}s`} repeatCount="indefinite" rotate="auto">
+                      <mpath href={`#${uid}${e.id}`} />
+                    </animateMotion>
+                  </circle>
+                ) : null}
               </g>
-            );
-          })}
-          <text x="395" y="165" fontSize="11" fill="var(--muted-foreground)" textAnchor="middle">key added on the server</text>
-          <text x="80" y="400" fontSize="11" fill="var(--muted-foreground)">Crimson = the path a ticket takes</text>
-        </svg>
+            ))}
+            {NODES.map((n) => {
+              const on = n.id === sel;
+              return (
+                <g
+                  key={n.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={on}
+                  aria-label={`${n.t}: ${n.s}`}
+                  onClick={() => setSel(n.id)}
+                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setSel(n.id))}
+                  className="group cursor-pointer outline-none"
+                >
+                  <rect x={n.x - 5} y={n.y - 5} width={n.w + 10} height="80" rx="20" fill="none" stroke="var(--ring)" strokeWidth="3" strokeDasharray="7 5" className="opacity-0 group-focus-visible:opacity-100" />
+                  <rect x={n.x} y={n.y} width={n.w} height="70" rx="16" fill="var(--card)" stroke={on ? "var(--signal)" : "var(--border)"} strokeWidth={on ? 2.5 : 1.2} style={{ filter: on ? "drop-shadow(0 10px 24px var(--glow))" : undefined }} />
+                  <text x={n.x + 16} y={n.y + 31} fontSize="18" fontWeight="700" fill="var(--foreground)">{n.t}</text>
+                  <text x={n.x + 16} y={n.y + 54} fontSize="14" fill="var(--muted-foreground)">{n.s.length > 22 ? `${n.s.slice(0, 21)}…` : n.s}</text>
+                </g>
+              );
+            })}
+            <text x="395" y="168" fontSize="14" fill="var(--muted-foreground)" textAnchor="middle">key added on the server</text>
+          </svg>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+          <p className="flex flex-wrap items-center gap-x-5 gap-y-1">
+            <span className="inline-flex items-center gap-2"><span aria-hidden="true" className="h-[3px] w-6 rounded-full bg-signal" /> Solid line with arrow: the path a ticket takes</span>
+            <span className="inline-flex items-center gap-2"><span aria-hidden="true" className="w-6 border-t-2 border-dashed border-muted-foreground" /> Dashed: agent and data traffic</span>
+          </p>
+          {!reduce ? (
+            <button type="button" onClick={() => setLive((v) => !v)} aria-pressed={!live} className="workspace-button !min-h-10">
+              {live ? <Pause aria-hidden="true" className="size-4" /> : <Play aria-hidden="true" className="size-4" />}
+              {live ? "Pause motion" : "Play motion"}
+            </button>
+          ) : null}
+        </div>
       </div>
-      <AnimatePresence mode="wait">
-        <motion.div key={node.id} initial={reduce ? false : { opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={reduce ? { opacity: 1 } : { opacity: 0, x: -8 }} transition={{ duration: 0.2 }} className="glass self-start rounded-2xl p-5" aria-live="polite">
-          <p className="mono-label">Component</p>
-          <h3 className="mt-1 text-xl font-bold tracking-[-0.02em]">{node.t}</h3>
-          <p className="text-sm font-medium text-signal">{node.s}</p>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{node.d}</p>
-        </motion.div>
-      </AnimatePresence>
+      <div className="self-start" aria-live="polite">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div key={node.id} initial={reduce ? false : { opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={reduce ? { opacity: 1 } : { opacity: 0, x: -8 }} transition={{ duration: 0.2 }} className="glass rounded-2xl p-5">
+            <p className="mono-label">Component</p>
+            <h3 className="mt-1 text-xl font-bold tracking-[-0.02em]">{node.t}</h3>
+            <p className="text-sm font-medium text-signal">{node.s}</p>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{node.d}</p>
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
@@ -192,23 +218,19 @@ const ENGINE = [
 ];
 
 export function DecisionEngine() {
-  const reduce = useReducedMotion();
   return (
     <div>
       <ol className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
         {ENGINE.map((e, i) => (
-          <motion.li
+          <li
             key={e.t}
-            initial={reduce ? false : { opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ delay: i * 0.08, duration: 0.4 }}
-            className={cn("relative rounded-2xl border p-4", e.tone ? "border-signal/50 bg-accent" : "bg-card/70")}
+            className={cn("scroll-reveal relative rounded-2xl border p-4", e.tone ? "border-signal/50 bg-accent" : "bg-card/70")}
+            data-i={i}
           >
             <span className="font-mono text-[10px] text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
             <p className="mt-2 font-bold">{e.t}</p>
             <p className="text-xs text-muted-foreground">{e.s}</p>
-          </motion.li>
+          </li>
         ))}
       </ol>
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
@@ -217,17 +239,14 @@ export function DecisionEngine() {
           { t: "Ask", s: "One answer is worth the wait", c: "bg-info-surface text-info" },
           { t: "Hand off", s: "Unsure, conflicting, or security", c: "bg-risk-surface text-risk" },
         ].map((o, i) => (
-          <motion.div
+          <div
             key={o.t}
-            initial={reduce ? false : { opacity: 0, scale: 0.96 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.5 + i * 0.1 }}
-            className={cn("rounded-2xl p-4", o.c)}
+            data-i={i}
+            className={cn("scroll-reveal rounded-2xl p-4", o.c)}
           >
             <p className="text-lg font-bold">{o.t}</p>
             <p className="text-xs">{o.s}</p>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>
@@ -247,7 +266,6 @@ const LAYERS = [
 
 export function SecurityLayers() {
   const [sel, setSel] = useState(LAYERS.length - 1);
-  const reduce = useReducedMotion();
   return (
     <div className="grid items-center gap-8 lg:grid-cols-2">
       <div className="relative mx-auto aspect-square w-full max-w-[380px]" aria-hidden="true">
@@ -255,15 +273,11 @@ export function SecurityLayers() {
           const inset = i * 8;
           const on = i === sel;
           return (
-            <motion.div
+            <div
               key={l.t}
-              className={cn("absolute rounded-full border", on ? "border-signal bg-accent/60" : "bg-card/30")}
+              className={cn("absolute rounded-full border transition-colors duration-300", on ? "border-signal bg-accent/60" : "bg-card/30")}
               style={{ inset: `${inset}%` }}
-              initial={reduce ? false : { scale: 0.85, opacity: 0 }}
-              whileInView={{ scale: 1, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.08, type: "spring", stiffness: 120, damping: 18 }}
-            />
+              />
           );
         })}
         <div className="absolute inset-[44%] grid place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">DATA</div>

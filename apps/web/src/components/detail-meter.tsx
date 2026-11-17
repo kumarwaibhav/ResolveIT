@@ -1,7 +1,8 @@
 "use client";
 
 import { Check, Minus } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 
 import { RingGauge } from "@/components/motion";
 import { SLOT_LABEL, type MeterResult } from "@/lib/meter";

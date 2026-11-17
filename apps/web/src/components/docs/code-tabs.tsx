@@ -1,8 +1,9 @@
 "use client";
 
 import { Check, Copy } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
-import { useId, useState } from "react";
+import { motion } from "motion/react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
+import { useId, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -12,15 +13,23 @@ export function CodeTabs({ samples, className }: { samples: { label: string; cod
   const [copied, setCopied] = useState(false);
   const reduce = useReducedMotion();
   const id = useId();
+  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const go = (next: number) => {
+    setActive(next);
+    tabs.current[next]?.focus();
+  };
   const current = samples[active]!;
   return (
     <div className={cn("overflow-hidden rounded-2xl border bg-[#0c0c0e] text-[#e7e5e4]", className)}>
-      <div className="flex items-center justify-between gap-2 border-b border-white/10 px-2">
-        <div role="tablist" aria-label="Language" className="flex">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 border-b border-white/10 px-2">
+        <div role="tablist" aria-label="Language" className="flex min-w-0 overflow-x-auto">
           {samples.map((s, i) => (
             <button
               key={s.label}
               id={`${id}-tab-${i}`}
+              ref={(el) => {
+                tabs.current[i] = el;
+              }}
               role="tab"
               type="button"
               aria-selected={i === active}
@@ -28,8 +37,11 @@ export function CodeTabs({ samples, className }: { samples: { label: string; cod
               tabIndex={i === active ? 0 : -1}
               onClick={() => setActive(i)}
               onKeyDown={(e) => {
-                if (e.key === "ArrowRight") setActive((active + 1) % samples.length);
-                if (e.key === "ArrowLeft") setActive((active - 1 + samples.length) % samples.length);
+                const keys: Record<string, number> = { ArrowRight: (i + 1) % samples.length, ArrowLeft: (i - 1 + samples.length) % samples.length, Home: 0, End: samples.length - 1 };
+                if (e.key in keys) {
+                  e.preventDefault();
+                  go(keys[e.key]!);
+                }
               }}
               className={cn("relative min-h-11 px-3 font-mono text-xs", i === active ? "text-white" : "text-[#a8a29e] hover:text-white")}
             >

@@ -37,7 +37,7 @@ export default function LoginPage() {
         <Wordmark />
         <ThemeToggle />
       </header>
-      <main id="main" className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-16 pt-4 lg:grid-cols-[1.1fr_1fr] lg:pt-10">
+      <main id="main" tabIndex={-1} className="mx-auto grid outline-none max-w-6xl items-center gap-10 px-5 pb-16 pt-4 lg:grid-cols-[1.1fr_1fr] lg:pt-10">
         <Reveal className="order-2 lg:order-1">
           <p className="eyebrow inline-flex items-center gap-2">
             <span aria-hidden="true" className="h-px w-6 bg-signal" /> Incident intelligence for IT teams
@@ -59,7 +59,7 @@ export default function LoginPage() {
               <li key={p.label} className="glass rounded-2xl p-4">
                 <span className="block text-2xl font-bold tracking-[-0.04em] tabular">{p.value}</span>
                 <span className="mt-1 block text-xs font-medium">{p.label}</span>
-                <span className="mt-0.5 block font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{p.note}</span>
+                <span className="mt-0.5 block font-mono text-xs uppercase tracking-wider text-muted-foreground">{p.note}</span>
               </li>
             ))}
           </ul>

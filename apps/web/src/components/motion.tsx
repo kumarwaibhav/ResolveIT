@@ -1,13 +1,14 @@
 "use client";
 
-import { animate, motion, useInView, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
-import { type ComponentProps, type ReactNode, useEffect, useRef, useState } from "react";
+import { animate, motion, useInView, useMotionValue, useSpring, useTransform } from "motion/react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
+import { type ComponentProps, type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-/** Short fade-up on mount. Under reduced motion it renders in place with no transition. */
+/** Short fade-up on first paint. Pure CSS, so server HTML is visible and hydration is identical. */
 export function Reveal({
   children,
   delay = 0,
@@ -19,15 +20,9 @@ export function Reveal({
   className?: string;
   as?: "div" | "section" | "li";
 }) {
-  const reduce = useReducedMotion();
-  const Comp = motion[as];
+  const Comp = as;
   return (
-    <Comp
-      className={className}
-      initial={reduce ? false : { opacity: 0, y: 10, filter: "blur(4px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      transition={{ duration: 0.32, delay: Math.min(delay, 0.12), ease: EASE }}
-    >
+    <Comp className={cn("reveal", className)} style={{ "--d": `${Math.min(delay, 0.12)}s` } as CSSProperties}>
       {children}
     </Comp>
   );
@@ -79,10 +74,10 @@ export function NumberTicker({ value, decimals = 0, suffix = "", className }: { 
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true });
   const reduce = useReducedMotion();
-  const [shown, setShown] = useState(reduce ? value : 0);
+  // Server and first client render both show the real value; counting starts only after mount.
+  const [shown, setShown] = useState(value);
   useEffect(() => {
-    if (!inView) return;
-    if (reduce) {
+    if (!inView || reduce) {
       setShown(value);
       return;
     }
@@ -150,18 +145,11 @@ export function RingGauge({ value, size = 120, stroke = 10, className, children 
   );
 }
 
-/** Reveal when scrolled into view (once). Reduced motion renders in place. */
-export function ScrollReveal({ children, className, delay = 0, y = 24, as = "div" }: { children: ReactNode; className?: string; delay?: number; y?: number; as?: "div" | "li" }) {
-  const reduce = useReducedMotion();
-  const Comp = as === "li" ? motion.li : motion.div;
+/** Reveal as it scrolls into view, using CSS scroll timelines where supported. Always visible without them. */
+export function ScrollReveal({ children, className, delay = 0, as = "div" }: { children: ReactNode; className?: string; delay?: number; y?: number; as?: "div" | "li" }) {
+  const Comp = as;
   return (
-    <Comp
-      className={className}
-      initial={reduce ? false : { opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.6, delay, ease: EASE }}
-    >
+    <Comp className={cn("scroll-reveal", className)} style={{ "--d": `${delay}s` } as CSSProperties}>
       {children}
     </Comp>
   );

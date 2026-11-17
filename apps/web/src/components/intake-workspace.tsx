@@ -2,7 +2,9 @@
 
 import { PageGuide } from "@/components/page-guide";
 import { ArrowUp, Bot, Languages, ListChecks, MessageCircleQuestion, ShieldAlert, Sparkles } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { DetailMeter } from "@/components/detail-meter";
@@ -32,7 +34,12 @@ const FACTS = [
 ];
 
 async function send(url: string, body: unknown): Promise<IncidentView> {
-  const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  let res: Response;
+  try {
+    res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  } catch {
+    throw new Error("Couldn't reach ResolveIT. Check your connection.");
+  }
   if (!res.ok) throw new Error(res.status === 409 ? "This question was already closed." : `The service returned ${res.status}.`);
   return (await res.json()) as IncidentView;
 }
@@ -43,6 +50,7 @@ export function IntakeWorkspace() {
   const [view, setView] = useState<IncidentView | null>(null);
   const [pending, setPending] = useState<"new" | "answer" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sampleId, setSampleId] = useState("");
   const resultRef = useRef<HTMLElement>(null);
   const meter = useMemo(() => measure(text), [text]);
   const reduce = useReducedMotion();
@@ -53,11 +61,13 @@ export function IntakeWorkspace() {
     if (sample) {
       setText(sample.text);
       setLocale(sample.locale);
+      setSampleId(sample.id);
     }
   }, []);
   const loadSample = (id: string) => {
     const sample = scenarioById(id);
     if (!sample) return;
+    setSampleId(sample.id);
     setText(sample.text);
     setLocale(sample.locale);
   };
@@ -65,6 +75,7 @@ export function IntakeWorkspace() {
   const run = async (kind: "new" | "answer", action: () => Promise<IncidentView>) => {
     setPending(kind);
     setError(null);
+    if (kind === "new") setView(null);
     try {
       setView(await action());
       requestAnimationFrame(() => resultRef.current?.querySelector<HTMLElement>("[data-result-heading]")?.focus());
@@ -86,7 +97,7 @@ export function IntakeWorkspace() {
         <span className="pill-status">Human oversight on</span>
       </WorkspaceHeading><PageGuide page="intake" />
 
-      <ul className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <ul className="mb-8 grid grid-cols-2 gap-3 xl:grid-cols-4">
         {FACTS.map(({ Icon, value, label }, i) => (
           <Reveal key={label} as="li" delay={i * 0.03}>
             <GlassCard tilt className="flex h-full items-center gap-3 p-4">
@@ -124,7 +135,10 @@ export function IntakeWorkspace() {
                   value={text}
                   maxLength={MAX}
                   rows={6}
-                  onChange={(e) => setText(e.target.value)}
+                  onChange={(e) => {
+                    setText(e.target.value);
+                    setSampleId("");
+                  }}
                   placeholder="VPN keeps dropping since this morning for the whole floor"
                   aria-describedby="problem-help"
                   className="block min-h-40 w-full resize-y rounded-2xl bg-transparent px-4 pb-12 pt-3.5 text-base leading-relaxed outline-none placeholder:text-muted-foreground"
@@ -143,7 +157,7 @@ export function IntakeWorkspace() {
                 <label htmlFor="sample" className="mono-label mb-2 inline-flex items-center gap-1.5">
                   <Sparkles aria-hidden="true" className="size-3" /> Load a real-world example
                 </label>
-                <select id="sample" defaultValue="" onChange={(e) => loadSample(e.target.value)} className="field-input !rounded-xl">
+                <select id="sample" value={sampleId} onChange={(e) => loadSample(e.target.value)} className="field-input !rounded-xl">
                   <option value="" disabled>Choose from 30 tickets…</option>
                   {(Object.keys(KIND_LABEL) as ScenarioKind[]).map((kind) => (
                     <optgroup key={kind} label={KIND_LABEL[kind].label}>
@@ -154,7 +168,7 @@ export function IntakeWorkspace() {
                   ))}
                 </select>
               </div>
-              <a href="/examples" className="inline-flex min-h-11 items-center text-sm font-semibold text-signal underline-offset-4 hover:underline">Browse all</a>
+              <Link href="/examples" className="inline-flex min-h-11 items-center text-sm font-semibold text-signal underline-offset-4 hover:underline">Browse all</Link>
             </div>
 
             <fieldset>
@@ -212,7 +226,8 @@ export function IntakeWorkspace() {
           </form>
         </GlassCard>
 
-        <section aria-label="Result" aria-live="polite" ref={resultRef} className="space-y-4 xl:sticky xl:top-24">
+        <section aria-label="Result" ref={resultRef} className="space-y-4 xl:sticky xl:top-24">
+          <p className="sr-only" role="status">{pending === "new" ? "Sending your ticket…" : view ? `Result ready: ${view.state === "ROUTED" ? "routed" : view.state === "PENDING_CLARIFICATION" ? "one optional question" : "sent to a person"}.` : ""}</p>
           {view?.is_synthetic_tenant ? <SyntheticBanner /> : null}
           {pending === "new" ? (
             <PipelineProgress />

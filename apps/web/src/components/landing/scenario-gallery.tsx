@@ -1,16 +1,16 @@
 "use client";
 
 import { ArrowRight, CircleHelp, Mail, MessageSquare, Phone, Route, ShieldAlert, Smartphone, UserRound } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import results from "@/generated/scenario-results.json";
 import { SLOT_LABEL } from "@/lib/meter";
 import { KIND_LABEL, SCENARIOS, type Scenario, type ScenarioKind } from "@/lib/scenarios";
 import { cn } from "@/lib/utils";
 
-interface Observed {
+export interface Observed {
   state: string;
   routed_team: string | null;
   recommended_team: string | null;
@@ -23,8 +23,6 @@ interface Observed {
   round_trip_ms: number;
 }
 
-const OBSERVED = (results as { verified_at: string | null; results: Record<string, Observed> }).results;
-const VERIFIED_AT = (results as { verified_at: string | null }).verified_at;
 const team = (t: string | null | undefined) => (t ?? "").replaceAll("_", " ");
 const REASON: Record<string, string> = {
   security_escalation: "security escalation",
@@ -61,7 +59,7 @@ function Outcome({ o }: { o: Observed | undefined }) {
   );
 }
 
-function Card({ s }: { s: Scenario }) {
+function Card({ s, o }: { s: Scenario; o: Observed | undefined }) {
   const Icon = CHANNEL_ICON[s.channel];
   return (
     <article className="glass flex h-full flex-col rounded-3xl p-6">
@@ -69,7 +67,7 @@ function Card({ s }: { s: Scenario }) {
         <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
           <Icon aria-hidden="true" className="size-4" /> {s.channel} · {s.who}
         </span>
-        <span className="rounded-full border px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{KIND_LABEL[s.kind].label}</span>
+        <span className="rounded-full border px-2.5 py-0.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">{KIND_LABEL[s.kind].label}</span>
       </div>
       <h3 className="mt-4 text-lg font-bold tracking-[-0.02em]">{s.title}</h3>
       <blockquote lang={s.locale === "hi" ? "hi" : undefined} className="mt-3 rounded-2xl rounded-tl-sm border bg-card px-4 py-3 text-[15px] leading-relaxed">
@@ -78,7 +76,7 @@ function Card({ s }: { s: Scenario }) {
       <p className="mt-3 text-sm text-muted-foreground">{s.why}</p>
       <div className="mt-auto pt-5">
         <p className="mono-label mb-2">What the engine did</p>
-        <Outcome o={OBSERVED[s.id]} />
+        <Outcome o={o} />
         <Link href={`/intake?sample=${s.id}`} className="mt-4 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-signal">
           Try it yourself <ArrowRight aria-hidden="true" className="size-4" />
           <span className="sr-only">: {s.title}</span>
@@ -88,7 +86,7 @@ function Card({ s }: { s: Scenario }) {
   );
 }
 
-export function ScenarioGallery() {
+export function ScenarioGallery({ observed, verifiedAt }: { observed: Record<string, Observed>; verifiedAt: string | null }) {
   const [kind, setKind] = useState<ScenarioKind | "all">("all");
   const reduce = useReducedMotion();
   const list = useMemo(() => (kind === "all" ? SCENARIOS : SCENARIOS.filter((s) => s.kind === kind)), [kind]);
@@ -118,8 +116,9 @@ export function ScenarioGallery() {
       <p className="mt-4 text-center text-sm text-muted-foreground" aria-live="polite">
         {kind === "all" ? "Every kind of ticket a service desk sees." : KIND_LABEL[kind].blurb}
       </p>
+      <h2 className="sr-only">Example tickets</h2>
       <motion.ul layout={!reduce} className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <AnimatePresence mode="popLayout">
+        <AnimatePresence mode="popLayout" initial={false}>
           {list.map((s) => (
             <motion.li
               key={s.id}
@@ -129,13 +128,13 @@ export function ScenarioGallery() {
               exit={reduce ? { opacity: 1 } : { opacity: 0, scale: 0.97 }}
               transition={{ duration: 0.25 }}
             >
-              <Card s={s} />
+              <Card s={s} o={observed[s.id]} />
             </motion.li>
           ))}
         </AnimatePresence>
       </motion.ul>
       <p className="mt-8 text-center text-xs text-muted-foreground">
-        {VERIFIED_AT ? `Outcomes recorded from the live demo engine on ${VERIFIED_AT.slice(0, 10)}, synthetic demo bundle.` : "Outcomes will appear once recorded from the live engine."}
+        {verifiedAt ? `Outcomes recorded from the live demo engine on ${verifiedAt.slice(0, 10)}, synthetic demo bundle.` : "Outcomes will appear once recorded from the live engine."}
       </p>
     </div>
   );

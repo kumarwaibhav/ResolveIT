@@ -102,7 +102,7 @@ export default function ApiPage() {
                 {list.map((o) => (
                   <li key={slug(o)}>
                     <a href={`#${slug(o)}`} className="flex items-center gap-2 rounded-lg py-1 text-sm text-muted-foreground hover:text-foreground">
-                      <span className={cn("w-10 shrink-0 rounded px-1 text-center font-mono text-[10px] font-bold", METHOD[o.method])}>{o.method}</span>
+                      <span className={cn("w-11 shrink-0 rounded px-1 text-center font-mono text-xs font-bold", METHOD[o.method])}>{o.method}</span>
                       <span className="truncate">{META[`${o.method} ${o.path}`]?.title ?? o.summary}</span>
                     </a>
                   </li>

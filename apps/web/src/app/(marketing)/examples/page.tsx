@@ -1,11 +1,24 @@
 import type { Metadata } from "next";
 
-import { ScenarioGallery } from "@/components/landing/scenario-gallery";
+import { ScenarioGallery, type Observed } from "@/components/landing/scenario-gallery";
+import results from "@/generated/scenario-results.json";
 import { Reveal } from "@/components/motion";
 
 export const metadata: Metadata = { title: "Examples" };
 
+/** Only the fields the cards display travel to the browser. */
+function trimmed(): { observed: Record<string, Observed>; verifiedAt: string | null } {
+  const raw = results as { verified_at: string | null; results: Record<string, Record<string, unknown>> };
+  const keep = ["state", "routed_team", "recommended_team", "defer_reason", "question", "security_trigger", "top_team", "top_p", "found", "round_trip_ms"] as const;
+  const observed: Record<string, Observed> = {};
+  for (const [id, row] of Object.entries(raw.results)) {
+    observed[id] = Object.fromEntries(keep.map((k) => [k, row[k] ?? null])) as unknown as Observed;
+  }
+  return { observed, verifiedAt: raw.verified_at };
+}
+
 export default function ExamplesPage() {
+  const { observed, verifiedAt } = trimmed();
   return (
     <div className="mx-auto max-w-6xl px-5 pt-12">
       <Reveal className="mx-auto max-w-3xl text-center">
@@ -16,7 +29,7 @@ export default function ExamplesPage() {
         </p>
       </Reveal>
       <div className="mt-12">
-        <ScenarioGallery />
+        <ScenarioGallery observed={observed} verifiedAt={verifiedAt} />
       </div>
     </div>
   );

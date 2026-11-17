@@ -41,5 +41,5 @@ function PracticeReviewWorkspace() {
 
 export function ReviewWorkspace() {
   const [practice, setPractice] = useState(false);
-  return <><div className="workspace-tabs" role="group" aria-label="Review data source"><button aria-pressed={!practice} onClick={() => setPractice(false)}>Connected tenant</button><button aria-pressed={practice} onClick={() => setPractice(true)}>Synthetic practice</button></div>{practice ? <PracticeReviewWorkspace /> : <LiveReviewWorkspace />}</>;
+  return <><div className="workspace-tabs" role="group" aria-label="Review data source"><button aria-pressed={!practice} onClick={() => setPractice(false)}>Connected tenant</button><button aria-pressed={practice} onClick={() => setPractice(true)}>Synthetic practice</button></div><div hidden={practice}><LiveReviewWorkspace /></div><div hidden={!practice}><PracticeReviewWorkspace /></div></>;
 }

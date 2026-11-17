@@ -1,15 +1,30 @@
 "use client";
 
 import { ArrowRight, Check, Minus, ShieldAlert } from "lucide-react";
-import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll } from "motion/react";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { StageStack } from "@/components/landing/stage-stack";
 import { RingGauge } from "@/components/motion";
 import { STAGES } from "@/components/viz/pipeline";
 import { measure, SLOT_LABEL } from "@/lib/meter";
 import { cn } from "@/lib/utils";
+
+/** One calm, debounced announcement instead of a live region over the whole column. */
+function SandboxStatus({ found, total, security }: { found: number; total: number; security: boolean }) {
+  const [msg, setMsg] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setMsg(`${found} of ${total} details found.${security ? " Security signal: this goes straight to a person." : ""}`), 600);
+    return () => clearTimeout(t);
+  }, [found, total, security]);
+  return (
+    <p className="sr-only" role="status">
+      {msg}
+    </p>
+  );
+}
 
 const SAMPLES = [
   { label: "Clear", text: "Outlook keeps crashing for the whole floor since this morning, urgent" },
@@ -51,7 +66,8 @@ export function TrySandbox() {
         </div>
         <p className="mt-5 text-xs text-muted-foreground">This preview runs on your device; nothing is sent. The full decision runs in a signed-in workspace.</p>
       </div>
-      <div className="p-6 sm:p-8" aria-live="polite">
+      <div className="p-6 sm:p-8">
+        <SandboxStatus found={result.found.length} total={total} security={result.security} />
         <div className="flex items-center gap-5">
           <RingGauge value={total ? result.found.length / total : 0} size={92} stroke={8}>
             <span className="text-xl font-bold tabular">{result.found.length}<span className="text-sm text-muted-foreground">/{total}</span></span>

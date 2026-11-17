@@ -1,7 +1,8 @@
 "use client";
 
 import { ChevronDown, Compass } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { useEffect, useId, useState } from "react";
 
 import { GUIDES } from "@/lib/guides";
@@ -12,6 +13,7 @@ import { cn } from "@/lib/utils";
 /** "How to use this page" in three steps. Open by default; remembers if you close it. */
 export function PageGuide({ page }: { page: keyof typeof GUIDES }) {
   const [open, setOpen] = useState(true);
+  const [ready, setReady] = useState(false);
   const reduce = useReducedMotion();
   const id = useId();
   const key = `resolveit-guide-${page}`;
@@ -21,26 +23,26 @@ export function PageGuide({ page }: { page: keyof typeof GUIDES }) {
     } catch {
       /* storage unavailable: keep it open */
     }
+    setReady(true);
   }, [key]);
   const toggle = () => {
-    setOpen((o) => {
-      try {
-        window.localStorage.setItem(key, o ? "closed" : "open");
-      } catch {
-        /* ignore */
-      }
-      return !o;
-    });
+    const next = !open;
+    try {
+      window.localStorage.setItem(key, next ? "open" : "closed");
+    } catch {
+      /* ignore */
+    }
+    setOpen(next);
   };
   return (
     <section aria-label="How to use this page" className="glass mb-8 rounded-2xl">
-      <button type="button" onClick={toggle} aria-expanded={open} aria-controls={id} className="flex min-h-12 w-full items-center gap-3 px-4 text-left">
+      <button type="button" onClick={toggle} aria-expanded={open && ready} aria-controls={id} className="flex min-h-12 w-full items-center gap-3 px-4 text-left">
         <Compass aria-hidden="true" className="size-4 text-signal" />
         <span className="flex-1 text-sm font-semibold">How to use this page</span>
         <ChevronDown aria-hidden="true" className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
       <AnimatePresence initial={false}>
-        {open ? (
+        {open && ready ? (
           <motion.ol
             id={id}
             initial={reduce ? false : { height: 0, opacity: 0 }}

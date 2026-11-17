@@ -1,6 +1,7 @@
 "use client";
 
-import { useReducedMotion } from "motion/react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
+import { Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { MonolithMark } from "@/components/brand/monolith";
@@ -15,30 +16,58 @@ export function HeroScene({ className }: { className?: string }) {
   const host = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const [failed, setFailed] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(false);
+  const syncRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     const el = host.current;
     if (!el) return;
+    if (reduce) {
+      setFailed(true);
+      return;
+    }
     let disposed = false;
-    let cleanup = () => {};
+    const cleanups: (() => void)[] = [];
+    const cleanup = () => {
+      while (cleanups.length) {
+        try {
+          cleanups.pop()!();
+        } catch {
+          /* keep releasing the rest */
+        }
+      }
+    };
 
     void (async () => {
       const THREE = await import("three");
       if (disposed) return;
       let renderer: InstanceType<typeof THREE.WebGLRenderer>;
       try {
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+        renderer = new THREE.WebGLRenderer({ antialias: !window.matchMedia("(pointer: coarse)").matches, alpha: true });
       } catch {
         setFailed(true);
         return;
       }
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      cleanups.push(() => {
+        renderer.dispose();
+        renderer.forceContextLoss();
+        renderer.domElement.remove();
+      });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, window.matchMedia("(pointer: coarse)").matches ? 1.5 : 2));
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.domElement.setAttribute("aria-hidden", "true");
       el.appendChild(renderer.domElement);
 
       const scene = new THREE.Scene();
+      cleanups.push(() =>
+        scene.traverse((o) => {
+          const m = o as { geometry?: { dispose(): void }; material?: { dispose(): void } };
+          m.geometry?.dispose();
+          m.material?.dispose();
+        }),
+      );
       const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
       camera.position.set(3.6, 2.2, 12.5);
       camera.lookAt(0.3, -0.1, 0);
@@ -122,17 +151,22 @@ export function HeroScene({ className }: { className?: string }) {
       pGeo.setAttribute("color", new THREE.BufferAttribute(col, 3));
       const dot = document.createElement("canvas");
       dot.width = dot.height = 64;
-      const g = dot.getContext("2d")!;
+      const g = dot.getContext("2d");
+      if (!g) throw new Error("2D canvas unavailable");
       const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
       grad.addColorStop(0, "rgba(255,255,255,1)");
       grad.addColorStop(0.4, "rgba(255,255,255,0.6)");
       grad.addColorStop(1, "rgba(255,255,255,0)");
       g.fillStyle = grad;
       g.fillRect(0, 0, 64, 64);
-      const pMat = new THREE.PointsMaterial({ size: 0.16, map: new THREE.CanvasTexture(dot), vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+      const dotTex = new THREE.CanvasTexture(dot);
+      cleanups.push(() => dotTex.dispose());
+      const pMat = new THREE.PointsMaterial({ size: 0.16, map: dotTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
       rig.add(new THREE.Points(pGeo, pMat));
       const pale = new THREE.Color(0xd8d4ce);
       const tmp = new THREE.Vector3();
+      const tmpColor = new THREE.Color();
+      const hot = [crimson.r * 1.4, crimson.g * 1.4, crimson.b * 1.4] as const;
       const place = () => {
         for (let i = 0; i < N; i++) {
           const t = phase[i]!;
@@ -143,13 +177,21 @@ export function HeroScene({ className }: { className?: string }) {
             tmp.y += jitter[i * 2]! * spread;
             tmp.z += 0.25 + jitter[i * 2 + 1]! * spread;
             tmp.x -= spread * 1.4;
-            pos.set([tmp.x, tmp.y, tmp.z], i * 3);
-            const c = pale.clone().lerp(crimson, u ** 6);
-            col.set([c.r * 0.9, c.g * 0.9, c.b * 0.9], i * 3);
+            pos[i * 3] = tmp.x;
+            pos[i * 3 + 1] = tmp.y;
+            pos[i * 3 + 2] = tmp.z;
+            tmpColor.copy(pale).lerp(crimson, u ** 6);
+            col[i * 3] = tmpColor.r * 0.9;
+            col[i * 3 + 1] = tmpColor.g * 0.9;
+            col[i * 3 + 2] = tmpColor.b * 0.9;
           } else {
             const u = (t - 0.6) / 0.4;
-            pos.set([node.x + u * (railLen + 0.8), 0, front + 0.12], i * 3);
-            col.set([crimson.r * 1.4, crimson.g * 1.4, crimson.b * 1.4], i * 3);
+            pos[i * 3] = node.x + u * (railLen + 0.8);
+            pos[i * 3 + 1] = 0;
+            pos[i * 3 + 2] = front + 0.12;
+            col[i * 3] = hot[0];
+            col[i * 3 + 1] = hot[1];
+            col[i * 3 + 2] = hot[2];
           }
         }
         pGeo.attributes.position!.needsUpdate = true;
@@ -161,7 +203,11 @@ export function HeroScene({ className }: { className?: string }) {
       const grid = new THREE.GridHelper(30, 30, 0x888888, 0x888888);
       const gm = grid.material as InstanceType<typeof THREE.LineBasicMaterial>;
       gm.transparent = true;
-      gm.opacity = document.documentElement.classList.contains("dark") ? 0.08 : 0.12;
+      const syncGrid = () => (gm.opacity = document.documentElement.classList.contains("dark") ? 0.08 : 0.12);
+      syncGrid();
+      const themeWatch = new MutationObserver(syncGrid);
+      themeWatch.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+      cleanups.push(() => themeWatch.disconnect());
       grid.position.y = -2.9;
       scene.add(grid);
 
@@ -172,6 +218,7 @@ export function HeroScene({ className }: { className?: string }) {
         target.y = (e.clientY / window.innerHeight - 0.5) * 0.18;
       };
       window.addEventListener("pointermove", onMove, { passive: true });
+      cleanups.push(() => window.removeEventListener("pointermove", onMove));
 
       const resize = () => {
         const w = el.clientWidth || 1;
@@ -184,21 +231,14 @@ export function HeroScene({ className }: { className?: string }) {
       };
       const ro = new ResizeObserver(resize);
       ro.observe(el);
+      cleanups.push(() => ro.disconnect());
       resize();
 
-      let visible = true;
-      const io = new IntersectionObserver(([entry]) => (visible = entry?.isIntersecting ?? true));
-      io.observe(el);
-
       let raf = 0;
-      let last = performance.now();
+      let last = 0;
       const loop = (now: number) => {
         raf = requestAnimationFrame(loop);
-        if (!visible || document.hidden) {
-          last = now;
-          return;
-        }
-        const dt = Math.min(0.05, (now - last) / 1000);
+        const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
         last = now;
         for (let i = 0; i < N; i++) phase[i] = (phase[i]! + speed[i]! * dt) % 1;
         place();
@@ -209,22 +249,35 @@ export function HeroScene({ className }: { className?: string }) {
         rig.rotation.x += (0.04 + target.y - rig.rotation.x) * 0.04;
         renderer.render(scene, camera);
       };
-      if (!reduce) raf = requestAnimationFrame(loop);
-
-      cleanup = () => {
-        cancelAnimationFrame(raf);
-        ro.disconnect();
-        io.disconnect();
-        window.removeEventListener("pointermove", onMove);
-        scene.traverse((o) => {
-          const m = o as { geometry?: { dispose(): void }; material?: { dispose(): void } };
-          m.geometry?.dispose();
-          m.material?.dispose();
-        });
-        renderer.dispose();
-        renderer.domElement.remove();
+      let onScreen = true;
+      const sync = () => {
+        const run = onScreen && !document.hidden && !pausedRef.current;
+        if (run && !raf) {
+          last = 0;
+          raf = requestAnimationFrame(loop);
+        } else if (!run && raf) {
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
       };
-    })().catch(() => setFailed(true));
+      const io = new IntersectionObserver(([entry]) => {
+        onScreen = entry?.isIntersecting ?? true;
+        sync();
+      });
+      io.observe(el);
+      document.addEventListener("visibilitychange", sync);
+      syncRef.current = sync;
+      cleanups.push(() => {
+        cancelAnimationFrame(raf);
+        io.disconnect();
+        document.removeEventListener("visibilitychange", sync);
+      });
+      if (disposed) cleanup();
+      else sync();
+    })().catch(() => {
+      cleanup();
+      if (!disposed) setFailed(true);
+    });
 
     return () => {
       disposed = true;
@@ -232,12 +285,31 @@ export function HeroScene({ className }: { className?: string }) {
     };
   }, [reduce]);
 
+  const toggle = () => {
+    pausedRef.current = !pausedRef.current;
+    setPaused(pausedRef.current);
+    syncRef.current();
+  };
+
   return (
-    <div ref={host} className={cn("relative [&>canvas]:absolute [&>canvas]:inset-0 [&>canvas]:size-full", className)} aria-hidden="true">
-      {failed ? (
-        <div className="grid size-full place-items-center">
-          <MonolithMark size={220} />
-        </div>
+    <div className={cn("relative", className)}>
+      <div ref={host} className="absolute inset-0 [&>canvas]:absolute [&>canvas]:inset-0 [&>canvas]:size-full" aria-hidden="true">
+        {failed ? (
+          <div className="grid size-full place-items-center">
+            <MonolithMark size={220} />
+          </div>
+        ) : null}
+      </div>
+      {!failed && !reduce ? (
+        <button
+          type="button"
+          onClick={toggle}
+          aria-pressed={paused}
+          className="glass absolute bottom-3 right-3 inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 text-xs font-semibold text-muted-foreground hover:text-foreground"
+        >
+          {paused ? <Play aria-hidden="true" className="size-3.5" /> : <Pause aria-hidden="true" className="size-3.5" />}
+          {paused ? "Play animation" : "Pause animation"}
+        </button>
       ) : null}
     </div>
   );

@@ -8,6 +8,7 @@ import { type ReactNode, useEffect, useState } from "react";
 
 import { MonolithMark, Wordmark } from "@/components/brand/monolith";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
+import { useModal } from "@/lib/use-modal";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
@@ -26,11 +27,12 @@ export function MarketingShell({ children }: { children: ReactNode }) {
   const { scrollY } = useScroll();
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 12));
   useEffect(() => setOpen(false), [pathname]);
+  const dialogRef = useModal(open, () => setOpen(false));
 
   return (
     <div className="relative min-h-dvh">
       <div className="atmosphere" aria-hidden="true" />
-      <header className="sticky top-0 z-40 px-3 pt-3">
+      <header inert={open} className="sticky top-0 z-40 px-3 pt-3">
         <div
           className={cn(
             "mx-auto flex h-14 max-w-6xl items-center gap-3 rounded-2xl px-3 transition-all duration-300 sm:px-4",
@@ -40,13 +42,13 @@ export function MarketingShell({ children }: { children: ReactNode }) {
           <Link href="/" aria-label="ResolveIT home" className="rounded-lg">
             <Wordmark />
           </Link>
-          <nav aria-label="Primary" className="ml-4 hidden flex-1 items-center gap-1 lg:flex">
+          <nav aria-label="Primary" className="ml-4 hidden flex-1 items-center gap-1 xl:flex">
             {LINKS.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 aria-current={pathname === l.href ? "page" : undefined}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:text-foreground"
+                className="whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:text-foreground"
               >
                 {l.label}
               </Link>
@@ -54,10 +56,10 @@ export function MarketingShell({ children }: { children: ReactNode }) {
           </nav>
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle className="hidden sm:inline-flex" />
-            <Link href="/login" className="hidden min-h-10 items-center rounded-xl px-3 text-sm font-semibold sm:inline-flex">
+            <Link href="/login" className="hidden min-h-10 items-center whitespace-nowrap rounded-xl px-3 text-sm font-semibold sm:inline-flex">
               Sign in
             </Link>
-            <Link href="/intake" className="workspace-button primary !min-h-10 !rounded-xl !px-4">
+            <Link href="/intake" className="workspace-button primary !hidden !min-h-10 whitespace-nowrap !rounded-xl !px-4 sm:!inline-flex">
               Open the app <ArrowRight aria-hidden="true" className="size-4" />
             </Link>
             <button
@@ -66,7 +68,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
               aria-expanded={open}
               aria-controls="site-menu"
               onClick={() => setOpen(true)}
-              className="grid size-11 place-items-center rounded-xl lg:hidden"
+              className="grid size-11 place-items-center rounded-xl xl:hidden"
             >
               <Menu aria-hidden="true" className="size-5" />
             </button>
@@ -78,10 +80,11 @@ export function MarketingShell({ children }: { children: ReactNode }) {
         {open ? (
           <motion.div
             id="site-menu"
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-label="Site menu"
-            className="glass-strong fixed inset-2 z-50 flex flex-col rounded-3xl p-5 lg:hidden"
+            className="glass-strong fixed inset-2 z-50 flex flex-col rounded-3xl p-5 xl:hidden"
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
@@ -94,8 +97,8 @@ export function MarketingShell({ children }: { children: ReactNode }) {
               </button>
             </div>
             <nav aria-label="Site" className="mt-8 flex flex-col">
-              {LINKS.concat({ href: "/login", label: "Sign in" }).map((l) => (
-                <Link key={l.href} href={l.href} className="border-b py-4 text-2xl font-bold tracking-[-0.03em]">
+              {LINKS.concat({ href: "/login", label: "Sign in" }, { href: "/intake", label: "Open the app" }).map((l) => (
+                <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="border-b py-4 text-2xl font-bold tracking-[-0.03em]">
                   {l.label}
                 </Link>
               ))}
@@ -105,11 +108,11 @@ export function MarketingShell({ children }: { children: ReactNode }) {
         ) : null}
       </AnimatePresence>
 
-      <main id="main" tabIndex={-1} className="outline-none">
+      <main id="main" tabIndex={-1} inert={open} className="outline-none">
         {children}
       </main>
 
-      <footer className="mx-auto mt-24 max-w-6xl border-t px-5 pb-12 pt-12">
+      <footer inert={open} className="mx-auto mt-24 max-w-6xl border-t px-5 pb-12 pt-12">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <Wordmark />
@@ -122,10 +125,10 @@ export function MarketingShell({ children }: { children: ReactNode }) {
           ].map((col) => (
             <div key={col.h}>
               <h2 className="mono-label">{col.h}</h2>
-              <ul className="mt-4 space-y-2.5">
+              <ul className="mt-2">
                 {col.l.map(([label, href]) => (
                   <li key={href}>
-                    <Link href={href!} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                    <Link href={href!} className="inline-flex min-h-11 items-center text-sm text-muted-foreground transition-colors hover:text-foreground">
                       {label}
                     </Link>
                   </li>

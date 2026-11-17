@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
-import { middleware } from "@/middleware";
+import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
+import { config, middleware } from "@/middleware";
 
 const previous = { demo: process.env.RESOLVEIT_LOCAL_DEMO, origin: process.env.RESOLVEIT_PUBLIC_ORIGIN };
 afterEach(() => {
@@ -53,8 +54,19 @@ describe("browser authorization boundary", () => {
     const login = await middleware(new NextRequest("https://resolve.example/login", { headers: { host: "resolve.example" } }));
     expect(login.status).toBe(200);
     expect(login.headers.get("x-frame-options")).toBe("DENY");
-    const home = await middleware(new NextRequest("https://resolve.example/", { headers: { host: "resolve.example" } }));
-    expect(home.status).toBe(307);
-    expect(home.headers.get("location")).toBe("https://resolve.example/login");
+    const intake = await middleware(new NextRequest("https://resolve.example/intake", { headers: { host: "resolve.example" } }));
+    expect(intake.status).toBe(307);
+    expect(intake.headers.get("location")).toBe("https://resolve.example/login");
+  });
+});
+
+describe("middleware matcher", () => {
+  const gated = ["/intake", "/intake/", "/incidents/00000000-0000-0000-0000-000000000000", "/review", "/bounce", "/evaluation", "/settings", "/mcp", "/login", "/api/incidents", "/api/me", "/api/health", "/api/session", "/api/workspaces/settings"];
+  const publicPages = ["/", "/docs", "/docs/api", "/architecture", "/examples", "/dataset"];
+  it.each(gated)("gates %s", (url) => {
+    expect(unstable_doesMiddlewareMatch({ config, url })).toBe(true);
+  });
+  it.each(publicPages)("leaves public page %s ungated", (url) => {
+    expect(unstable_doesMiddlewareMatch({ config, url })).toBe(false);
   });
 });

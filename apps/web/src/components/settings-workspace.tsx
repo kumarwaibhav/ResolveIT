@@ -17,7 +17,13 @@ export function SettingsWorkspace() {
     if (version === null) return;
     setBusy(true); setSettingsMessage("");
     try { const data = await workspaceApi<TenantSettings>("settings", "PUT", { version, timezone, queue_mapping: Object.fromEntries(Object.entries(mapping).filter(([, queue]) => queue.trim()).map(([team, queue]) => [team, queue.trim()])), misroute_minutes: 240 * scale, defer_minutes: deferMinutes }); setVersion(data.version); setSettingsMessage(`Tenant configuration saved at version ${data.version}. Routing certification remains independent.`); }
-    catch (err) { setSettingsMessage(err instanceof Error ? `Save failed: ${err.message}` : "Save failed."); }
+    catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      if (/conflict|409|version/i.test(message)) {
+        try { const latest = await workspaceApi<TenantSettings>("settings"); setVersion(latest.version); setSettingsMessage(`Someone saved settings while you were editing (now version ${latest.version}). Your edits are kept here; review them and press Save again to apply them on top.`); }
+        catch { setSettingsMessage("Save failed: settings changed elsewhere. Reload the page to see the latest version."); }
+      } else setSettingsMessage(message ? `Save failed: ${message}` : "Save failed.");
+    }
     finally { setBusy(false); }
   };
   const erase = async () => {

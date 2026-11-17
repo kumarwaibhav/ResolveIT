@@ -1,6 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { useState } from "react";
 
 import { STAGES } from "@/components/viz/pipeline";
@@ -56,7 +57,7 @@ export function ArchitectureExplorer() {
         </div>
       </div>
       <div className="mt-6 border-t pt-5" aria-live="polite">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={current.name}
             initial={reduce ? false : { opacity: 0, y: 6 }}

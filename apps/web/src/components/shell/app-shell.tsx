@@ -17,13 +17,15 @@ import {
   UsersRound,
   X,
 } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 
 import { MonolithMark, Wordmark } from "@/components/brand/monolith";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
+import { useModal } from "@/lib/use-modal";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -98,7 +100,7 @@ function NavList({ items, label, pathname, role, onNavigate }: { items: NavItem[
               >
                 <item.Icon aria-hidden="true" className={cn("size-[18px]", active && "text-signal")} />
                 <span className="flex-1">{item.label}</span>
-                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
                   {locked ? "admin" : item.hint}
                 </span>
               </Link>
@@ -111,22 +113,22 @@ function NavList({ items, label, pathname, role, onNavigate }: { items: NavItem[
 }
 
 function EngineStatus() {
-  const [state, setState] = useState<{ ok: boolean; ms: number } | null | undefined>(undefined);
+  const [state, setState] = useState<{ ok: boolean; ms: number; configured?: boolean } | null | undefined>(undefined);
   useEffect(() => {
     let alive = true;
     const started = performance.now();
     fetch("/api/health", { cache: "no-store" })
-      .then(async (r) => (r.status === 401 ? null : { ok: r.ok && (await r.json()).ok === true, ms: performance.now() - started }))
-      .catch(() => ({ ok: false, ms: performance.now() - started }))
+      .then(async (r) => (r.status === 401 ? null : { ok: r.ok && (await r.json()).ok === true, ms: performance.now() - started, configured: r.status !== 503 }))
+      .catch(() => ({ ok: false, ms: performance.now() - started, configured: true }))
       .then((s) => alive && setState(s));
     return () => {
       alive = false;
     };
   }, []);
   if (state === null) return null;
-  const label = state === undefined ? "Checking engine" : state.ok ? `Engine ready · ${Math.round(state.ms)} ms` : "Engine asleep · wakes on first ticket";
+  const label = state === undefined ? "Checking engine" : state.ok ? `Engine ready · ${Math.round(state.ms)} ms` : state.configured === false ? "Engine not connected" : "Engine asleep · wakes on first ticket";
   return (
-    <span className="hidden items-center gap-2 rounded-full border bg-card/60 px-3 py-1.5 font-mono text-[11px] text-muted-foreground md:inline-flex" role="status">
+    <span className="hidden items-center gap-2 whitespace-nowrap rounded-full border bg-card/60 px-3 py-1.5 font-mono text-[11px] text-muted-foreground lg:inline-flex" role="status">
       <span aria-hidden="true" className={cn("size-1.5 rounded-full", state === undefined ? "bg-muted-foreground" : state.ok ? "dot-live" : "bg-warn")} />
       {label}
     </span>
@@ -145,6 +147,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       .catch(() => setIdentity(null));
   }, []);
   useEffect(() => setOpen(false), [pathname]);
+  const drawerRef = useModal(open, () => setOpen(false));
   const role = identity ? identity.role : null;
   const current = [...WORKSPACE, ...LEARN].find((i) => isActive(pathname, i.href));
 
@@ -183,7 +186,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh">
       <div className="atmosphere" aria-hidden="true" />
-      <aside className="glass fixed inset-y-3 left-3 z-30 hidden w-[264px] flex-col rounded-3xl p-4 lg:flex">{sidebar(false)}</aside>
+      <aside aria-label="Sidebar" className="glass fixed inset-y-3 left-3 z-30 hidden w-[264px] flex-col rounded-3xl p-4 lg:flex">{sidebar(false)}</aside>
 
       <AnimatePresence>
         {open ? (
@@ -199,6 +202,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             <motion.aside
               key="drawer"
               id="mobile-menu"
+              ref={drawerRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Menu"
               className="glass-strong fixed inset-y-2 left-2 z-50 flex w-[min(300px,calc(100vw-16px))] flex-col rounded-3xl p-4 lg:hidden"
               initial={{ x: -320 }}
               animate={{ x: 0 }}
@@ -211,7 +218,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         ) : null}
       </AnimatePresence>
 
-      <div className="lg:pl-[284px]">
+      <div inert={open} className="lg:pl-[284px]">
         <header className="sticky top-0 z-20 px-3 pt-3 sm:px-5">
           <div className="glass flex min-h-14 items-center gap-2 rounded-2xl px-2 sm:gap-3 sm:px-3">
             <button
@@ -224,7 +231,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               <Menu aria-hidden="true" className="size-5" />
             </button>
-            <Link href="/" aria-label="ResolveIT home" className="lg:hidden">
+            <Link href="/" aria-label="ResolveIT home" className="grid size-11 place-items-center lg:hidden">
               <MonolithMark size={26} />
             </Link>
             <p className="min-w-0 flex-1 truncate text-sm">

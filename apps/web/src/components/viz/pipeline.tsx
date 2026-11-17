@@ -1,6 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { Brain, FileText, ShieldCheck, Scale, UserRoundCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -96,7 +97,7 @@ export function PipelineProgress() {
     };
   }, []);
   return (
-    <div className="glass rounded-2xl p-6" role="status" aria-live="polite">
+    <div className="glass rounded-2xl p-6">
       <p className="eyebrow">Processing</p>
       <p className="mb-6 text-lg font-semibold tracking-tight">{STAGES[step]!.title}…</p>
       <PipelineTrack active={step} running />

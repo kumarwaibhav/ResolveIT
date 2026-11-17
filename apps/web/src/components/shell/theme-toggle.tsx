@@ -28,7 +28,7 @@ export function ThemeToggle({ className }: { className?: string }) {
             aria-pressed={on}
             onClick={() => setTheme(value)}
             className={cn(
-              "grid size-8 place-items-center rounded-full text-muted-foreground transition-colors hover:text-foreground",
+              "grid size-10 place-items-center rounded-full text-muted-foreground transition-colors hover:text-foreground",
               on && "bg-foreground text-background hover:text-background",
             )}
           >
