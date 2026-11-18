@@ -210,5 +210,5 @@
       "pattern": "\\b(?:since last week|last week|pichhle hafte|pichle hafte)\\b|पिछले हफ्ते"
     }
   ],
-  "security_pattern": "\\b(?:phish(?:ing|ed)?|ransomware|malware|virus|trojan|data breach|breach(?:ed)?|suspicious (?:link|e-?mail|attachment|login)|clicked (?:on )?(?:a |the )?(?:link|attachment)|account (?:was |got |is )?(?:hacked|compromised)|password (?:was |got )?(?:leaked|stolen)|unauthori[sz]ed access|hack ho gaya|hack ho gya|hack kar liya)\\b|फ़िशिंग|फिशिंग|हैक"
+  "security_pattern": "\\b(?:phish(?:ing|ed)?|ransom(?:ware)?|firauti|malware|virus|trojan|data breach|breach(?:ed)?|suspicious (?:link|e-?mail|attachment|login)|clicked (?:on )?(?:a |the )?(?:link|attachment)|account (?:was |got |is )?(?:hacked|compromised)|password (?:was |got )?(?:leaked|stolen)|(?:files?|drives?|folders?|data) (?:(?:are|is|was|were|got|have been|has been|all) )*encrypted|encrypted (?:all )?(?:my|our|the) (?:files?|data|drives?|folders?)|files? encrypt ho (?:gayi|gaye|gai)|unauthori[sz]ed access|hack ho gaya|hack ho gya|hack kar liya)\\b|फ़िशिंग|फिशिंग|हैक|फिरौती"
 }

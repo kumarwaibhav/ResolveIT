@@ -94,10 +94,12 @@ _SCOPE: tuple[tuple[str, str], ...] = (
 )
 
 _SECURITY = re.compile(
-    r"\b(?:phish(?:ing|ed)?|ransomware|malware|virus|trojan|data breach|breach(?:ed)?|"
+    r"\b(?:phish(?:ing|ed)?|ransom(?:ware)?|firauti|malware|virus|trojan|data breach|breach(?:ed)?|"
     r"suspicious (?:link|e-?mail|attachment|login)|clicked (?:on )?(?:a |the )?(?:link|attachment)|"
     r"account (?:was |got |is )?(?:hacked|compromised)|password (?:was |got )?(?:leaked|stolen)|"
-    r"unauthori[sz]ed access|hack ho gaya|hack ho gya|hack kar liya)\b|फ़िशिंग|फिशिंग|हैक",
+    r"(?:files?|drives?|folders?|data) (?:(?:are|is|was|were|got|have been|has been|all) )*encrypted|"
+    r"encrypted (?:all )?(?:my|our|the) (?:files?|data|drives?|folders?)|files? encrypt ho (?:gayi|gaye|gai)|"
+    r"unauthori[sz]ed access|hack ho gaya|hack ho gya|hack kar liya)\b|फ़िशिंग|फिशिंग|हैक|फिरौती",
     _I,
 )
 

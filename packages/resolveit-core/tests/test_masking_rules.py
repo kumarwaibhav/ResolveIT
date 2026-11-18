@@ -129,3 +129,33 @@ def test_naive_datetime_rejected() -> None:
 
     with pytest.raises(ValueError):
         run_rules("x", datetime(2026, 1, 1), "Asia/Kolkata")
+
+
+RANSOM_POSITIVES = [
+    "all files on the shared drive have strange extensions and there is a ransom note on my screen",
+    "a ransom message popped up asking for bitcoin",
+    "they want a ransom to unlock our data",
+    "ransomware popup on my screen",
+    "all my files are encrypted and I can't open anything",
+    "the shared drive got encrypted overnight",
+    "someone encrypted all our files on the server",
+    "files encrypt ho gayi hai aur firauti maang rahe hain",
+    "स्क्रीन पर फिरौती का मैसेज आया है",
+]
+RANSOM_LOOKALIKES = [
+    "the random password generator is broken",
+    "encrypted email from HR will not open in Outlook",
+    "how do I send an encrypted attachment",
+    "BitLocker asks for the encryption recovery key on my laptop",
+    "the transom window in meeting room 3 is stuck",
+]
+
+
+def test_ransom_and_encrypted_files_escalate() -> None:
+    for text in RANSOM_POSITIVES:
+        assert run_rules(text, NOW, "Asia/Kolkata").security_trigger, text
+
+
+def test_ordinary_encryption_tickets_do_not_escalate() -> None:
+    for text in RANSOM_LOOKALIKES:
+        assert not run_rules(text, NOW, "Asia/Kolkata").security_trigger, text
