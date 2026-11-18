@@ -1,5 +1,5 @@
 {
- "verified_at": "2026-11-17T16:09:46+0530",
+ "verified_at": "2026-11-18T07:19:39+0530",
  "results": {
   "net-vpn": {
    "state": "ROUTED",
@@ -19,7 +19,7 @@
     "start_time",
     "frequency"
    ],
-   "round_trip_ms": 11065
+   "round_trip_ms": 4883
   },
   "net-wifi": {
    "state": "ROUTED",
@@ -40,7 +40,7 @@
     "service",
     "start_time"
    ],
-   "round_trip_ms": 12918
+   "round_trip_ms": 1602
   },
   "idm-sso": {
    "state": "ROUTED",
@@ -59,7 +59,7 @@
     "service",
     "frequency"
    ],
-   "round_trip_ms": 9651
+   "round_trip_ms": 747
   },
   "idm-password": {
    "state": "ROUTED",
@@ -79,7 +79,7 @@
     "service",
     "start_time"
    ],
-   "round_trip_ms": 9648
+   "round_trip_ms": 736
   },
   "mail-outlook": {
    "state": "ROUTED",
@@ -100,7 +100,7 @@
     "start_time",
     "frequency"
    ],
-   "round_trip_ms": 9556
+   "round_trip_ms": 758
   },
   "mail-teams": {
    "state": "ROUTED",
@@ -121,7 +121,7 @@
     "service",
     "frequency"
    ],
-   "round_trip_ms": 9729
+   "round_trip_ms": 1665
   },
   "hw-laptop": {
    "state": "ROUTED",
@@ -140,7 +140,7 @@
     "service",
     "start_time"
    ],
-   "round_trip_ms": 9837
+   "round_trip_ms": 782
   },
   "hw-printer": {
    "state": "ROUTED",
@@ -160,7 +160,7 @@
     "service",
     "urgency"
    ],
-   "round_trip_ms": 10102
+   "round_trip_ms": 811
   },
   "sw-licence": {
    "state": "ROUTED",
@@ -178,7 +178,7 @@
    "found": [
     "service"
    ],
-   "round_trip_ms": 9572
+   "round_trip_ms": 819
   },
   "db-postgres": {
    "state": "ROUTED",
@@ -197,7 +197,7 @@
     "service",
     "start_time"
    ],
-   "round_trip_ms": 9798
+   "round_trip_ms": 1903
   },
   "cloud-k8s": {
    "state": "ROUTED",
@@ -217,7 +217,7 @@
     "frequency",
     "urgency"
    ],
-   "round_trip_ms": 9446
+   "round_trip_ms": 1125
   },
   "erp-sap": {
    "state": "DEFERRED",
@@ -238,7 +238,7 @@
     "service",
     "start_time"
    ],
-   "round_trip_ms": 8220
+   "round_trip_ms": 905
   },
   "hr-payslip": {
    "state": "ROUTED",
@@ -256,7 +256,7 @@
    "found": [
     "service"
    ],
-   "round_trip_ms": 9909
+   "round_trip_ms": 823
   },
   "devops-pipeline": {
    "state": "DEFERRED",
@@ -276,7 +276,7 @@
    "found": [
     "service"
    ],
-   "round_trip_ms": 8331
+   "round_trip_ms": 787
   },
   "av-projector": {
    "state": "ROUTED",
@@ -294,7 +294,7 @@
    "found": [
     "service"
    ],
-   "round_trip_ms": 9639
+   "round_trip_ms": 1438
   },
   "vague-nothing": {
    "state": "PENDING_CLARIFICATION",
@@ -317,7 +317,7 @@
     "start_time",
     "urgency"
    ],
-   "round_trip_ms": 8451
+   "round_trip_ms": 872
   },
   "vague-slow": {
    "state": "PENDING_CLARIFICATION",
@@ -339,7 +339,7 @@
    "found": [
     "start_time"
    ],
-   "round_trip_ms": 8283
+   "round_trip_ms": 822
   },
   "vague-stopped": {
    "state": "PENDING_CLARIFICATION",
@@ -361,7 +361,7 @@
     "start_time",
     "frequency"
    ],
-   "round_trip_ms": 8823
+   "round_trip_ms": 1028
   },
   "ml-hindi-mail": {
    "state": "ROUTED",
@@ -381,7 +381,7 @@
     "start_time",
     "urgency"
    ],
-   "round_trip_ms": 9595
+   "round_trip_ms": 793
   },
   "ml-hinglish-vpn": {
    "state": "ROUTED",
@@ -402,7 +402,7 @@
     "start_time",
     "frequency"
    ],
-   "round_trip_ms": 9947
+   "round_trip_ms": 751
   },
   "ml-hinglish-laptop": {
    "state": "ROUTED",
@@ -422,15 +422,15 @@
     "scope",
     "frequency"
    ],
-   "round_trip_ms": 9739
+   "round_trip_ms": 739
   },
   "cmp-vpn-teams": {
-   "state": "DEFERRED",
-   "action": "DEFER",
+   "state": "PENDING_CLARIFICATION",
+   "action": "ASK",
    "routed_team": null,
    "recommended_team": "Network",
-   "defer_reason": "set_too_large",
-   "question": null,
+   "defer_reason": null,
+   "question": "Which system or app is this about?",
    "security_trigger": false,
    "top_team": "Network",
    "top_p": 0.816,
@@ -445,7 +445,7 @@
     "scope",
     "start_time"
    ],
-   "round_trip_ms": 8387
+   "round_trip_ms": 698
   },
   "cmp-sso-sap": {
    "state": "PENDING_CLARIFICATION",
@@ -464,7 +464,7 @@
    "found": [
     "service"
    ],
-   "round_trip_ms": 9011
+   "round_trip_ms": 699
   },
   "err-hex": {
    "state": "ROUTED",
@@ -486,7 +486,7 @@
     "error_code",
     "urgency"
    ],
-   "round_trip_ms": 9626
+   "round_trip_ms": 984
   },
   "err-ora": {
    "state": "ROUTED",
@@ -507,7 +507,7 @@
     "start_time",
     "error_code"
    ],
-   "round_trip_ms": 9821
+   "round_trip_ms": 1276
   },
   "err-http": {
    "state": "PENDING_CLARIFICATION",
@@ -531,7 +531,7 @@
     "start_time",
     "error_code"
    ],
-   "round_trip_ms": 8401
+   "round_trip_ms": 1453
   },
   "sec-phish": {
    "state": "DEFERRED",
@@ -551,26 +551,24 @@
     "service",
     "scope"
    ],
-   "round_trip_ms": 8293
+   "round_trip_ms": 1709
   },
   "sec-ransom": {
-   "state": "PENDING_CLARIFICATION",
-   "action": "ASK",
+   "state": "DEFERRED",
+   "action": "DEFER",
    "routed_team": null,
-   "recommended_team": "Cloud_Infra",
-   "defer_reason": null,
-   "question": "Which system or app is this about?",
-   "security_trigger": false,
-   "top_team": "Cloud_Infra",
-   "top_p": 0.344,
+   "recommended_team": "Security",
+   "defer_reason": "security_escalation",
+   "question": null,
+   "security_trigger": true,
+   "top_team": "Security",
+   "top_p": 0.877,
    "plausible": [
-    "Hardware_Endpoint",
-    "Database",
     "Cloud_Infra",
     "Security"
    ],
    "found": [],
-   "round_trip_ms": 8396
+   "round_trip_ms": 857
   },
   "sec-suspicious": {
    "state": "DEFERRED",
@@ -589,7 +587,7 @@
    "found": [
     "service"
    ],
-   "round_trip_ms": 8095
+   "round_trip_ms": 885
   },
   "out-everyone": {
    "state": "ROUTED",
@@ -610,7 +608,7 @@
     "start_time",
     "urgency"
    ],
-   "round_trip_ms": 9619
+   "round_trip_ms": 1006
   }
  }
 }
